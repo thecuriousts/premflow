@@ -1,11 +1,15 @@
 # premflow
 
+![premflow](/project-into-picture-grok-image.png)
+
+
 Small command-line helper for quick notes, todos, pomodoro timers, and a daily review. Data is stored under `~/.premflow/` (`log.txt`, `todo.txt`).
+
 
 ## Build
 
 ```bash
-gcc -o premflow premflow_source.c
+gcc premflow_source.c -o premflow
 ```
 
 Optionally install the binary somewhere on your `PATH`.
