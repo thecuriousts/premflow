@@ -2,28 +2,36 @@
 
 ![premflow](/project-into-picture-grok-image.png)
 
+Small C CLI for notes, tasks, pomodoro, a daily journal, quick search, and a simple stats view. Everything lives under `~/.premflow/`:
 
-Small command-line helper for quick notes, todos, pomodoro timers, and a daily review. Data is stored under `~/.premflow/` (`log.txt`, `todo.txt`).
-
+- `log.txt` — timestamped notes, wins, pomodoros, and completed tasks
+- `todo.txt` — active tasks
+- `journal/journal-YYYY-MM-DD.txt` — one file per day (created with a short template the first time you open it)
 
 ## Build
 
 ```bash
-gcc premflow_source.c -o premflow
+gcc main.c -o premflow
 ```
 
-Optionally install the binary somewhere on your `PATH`.
+Install the binary on your `PATH` if you like.
 
 ## Usage
 
-Run `premflow` with no arguments to see all commands:
+Run `premflow` with no arguments for the full command list.
 
-- **note** — append a timestamped note to the log
-- **task add / list / done** — manage a simple todo list; completing a task moves it to the log as done
-- **pomo** — focus timer (default 25 minutes)
-- **edit** / **edit todo** — open the log or todo file in `$EDITOR` (falls back to `nano`)
-- **review** — show recent log lines and active tasks
+| Command | What it does |
+|--------|----------------|
+| `note "…"` | Append a note to the log |
+| `task add "…"` / `task list` / `task done N` | Todos; `done` moves the line to the log as `[DONE]` |
+| `win "…"` | Log a win or gratitude-style entry (`[WIN]`) |
+| `journal` | Open today’s journal in `$EDITOR` (template on first open) |
+| `pomo [minutes]` | Focus timer (default 25) |
+| `edit` / `edit todo` | Edit log or todo file in `$EDITOR` (default `nano`) |
+| `search "keyword"` | Grep log and todo files (case-insensitive, colored when supported) |
+| `stats` | Counts for pomos, done tasks, notes, wins; today’s journal hint |
+| `review` | Last lines of the log plus active tasks |
 
 ## Requirements
 
-POSIX-ish environment (Linux/macOS), C compiler, and `tail` for `review`.
+POSIX-style OS (Linux/macOS), a C compiler, `grep` (for `search`), and `tail` (for `review`). `stats` uses `date` and `ls` via the shell.
