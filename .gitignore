@@ -1,0 +1,9 @@
+# Build output
+premflow
+*.o
+a.out
+
+# Editor / OS
+*.swp
+*~
+.DS_Store
