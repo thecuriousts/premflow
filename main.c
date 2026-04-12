@@ -154,20 +154,22 @@ void launch_journal() {
 }
 
 void search_logs(const char* term) {
-    char* logpath = get_data_path(LOG_FILE);
-    char* todopath = get_data_path(TODO_FILE);
+    char logpath_buf[512];
+    strncpy(logpath_buf, get_data_path(LOG_FILE), sizeof(logpath_buf));
+    char todopath_buf[512];
+    strncpy(todopath_buf, get_data_path(TODO_FILE), sizeof(todopath_buf));
     char cmd[1024];
     printf("🔎 Search results for \"%s\":\n\n", term);
-    snprintf(cmd, sizeof(cmd), "grep -i --color=always \"%s\" \"%s\" 2>/dev/null || echo '   No matches in notes'", term, logpath);
+    snprintf(cmd, sizeof(cmd), "grep -i --color=always \"%s\" \"%s\" 2>/dev/null || echo '   No matches in notes'", term, logpath_buf);
     system(cmd);
     printf("\n");
-    snprintf(cmd, sizeof(cmd), "grep -i --color=always \"%s\" \"%s\" 2>/dev/null || echo '   No matches in tasks'", term, todopath);
+    snprintf(cmd, sizeof(cmd), "grep -i --color=always \"%s\" \"%s\" 2>/dev/null || echo '   No matches in tasks'", term, todopath_buf);
     system(cmd);
 }
 
 void show_stats() {
     char* logpath = get_data_path(LOG_FILE);
-    printf("🏆 premflow Stats Dashboard — Peramanathan Sathyamoorthy\n");
+    printf("🏆 premflow Stats Dashboard\n");
     printf("==================================================\n");
     char cmd[1024];
     printf("\n📊 Lifetime Highlights:\n");
