@@ -20,15 +20,10 @@ test: test.o core.o
 	$(CC) $(CFLAGS) -o test_runner test.o core.o
 	./test_runner
 
-install: premflow premflow.1 premflow-completion.bash
+install: premflow
 	install -d $(PREFIX)/bin
 	install -m 755 premflow $(PREFIX)/bin/premflow
-	install -d $(PREFIX)/share/man/man1
-	install -m 644 premflow.1 $(PREFIX)/share/man/man1/premflow.1
-	install -d $(PREFIX)/share/bash-completion/completions
-	install -m 644 premflow-completion.bash $(PREFIX)/share/bash-completion/completions/premflow
 	@echo "✅ premflow installed to $(PREFIX)/bin/premflow"
-	@echo "✅ Man page and bash completion installed"
 
 uninstall:
 	rm -f $(PREFIX)/bin/premflow
@@ -39,12 +34,5 @@ uninstall:
 clean:
 	rm -f *.o premflow test_runner
 
-updpkgsums:
-	@if ! command -v updpkgsums >/dev/null 2>&1; then \
-		echo "Error: updpkgsums not found. Install with: sudo pacman -S pacman-contrib"; \
-		exit 1; \
-	fi
-	updpkgsums
-	@echo "✅ sha256sums updated in PKGBUILD"
 
-.PHONY: all clean test install uninstall updpkgsums
+.PHONY: all clean test install uninstall

@@ -1,6 +1,6 @@
 # premflow
 
-![premflow](/project-into-picture-grok-image.png)
+![premflow](/project-intro-picture-grok-image.png)
 
 **Tiny. Clean. Powerful.**  
 A minimalist productivity CLI tool written in pure C — zero bloat, maximum daily time saved.
@@ -142,6 +142,12 @@ premflow/
 ├── README.md
 ```
 
+### Screenshots
+
+![build](/screenshots/build.sh-2026-04-24_22-30-24.png)
+![make](/screenshots/make-install-2026-04-24_22-32-44.png)
+![usecase](/screenshots/usecase-2026-04-24_20-09-26.png)
+
 ### Philosophy
 
 - One tiny binary (~26KB)
@@ -149,6 +155,11 @@ premflow/
 - Built for speed and daily personal use
 - Clean separation: Logic vs Display
 - Proper error handling and exit codes
+
+### Todos
+
+-  AUR packaging for Arch Linux
+
 
 ---
 

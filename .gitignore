@@ -7,3 +7,34 @@ a.out
 *.swp
 *~
 .DS_Store
+
+# Build artifacts
+*.o
+premflow
+test_runner
+*.pkg.tar.*
+*.pkg.tar.zst
+
+# AUR packaging
+src/
+pkg/
+*.SRCINFO
+
+# Editor / OS files
+*~
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporary test files
+/tmp/premflow_*
+
+# Backup files
+*.bak
+*.orig
+
+# Debug / core dumps
+core
+*.core
+vgcore.*
