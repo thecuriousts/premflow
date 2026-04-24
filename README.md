@@ -7,9 +7,8 @@ A minimalist productivity CLI tool written in pure C — zero bloat, maximum dai
 
 ---
 
-## For Users
-
 ### Features
+
 
 - 📝 Quick notes & wins logging
 - ✅ Task management (add, list, complete)
@@ -18,6 +17,9 @@ A minimalist productivity CLI tool written in pure C — zero bloat, maximum dai
 - 🔍 Search across logs & tasks
 - 📊 Personal stats dashboard
 - ⚙️ Customizable sounds via config
+
+![usecase polished](/usecase.png)
+
 
 ### Installation
 
@@ -109,8 +111,8 @@ Empty value = disable that sound.
 make              # Build the binary
 make test         # Run all 8 comprehensive tests (file I/O mocking)
 make clean        # Remove build artifacts
-make install      # Install system-wide (/usr/local)
-make install PREFIX=~/.local   # User-local install (no sudo)
+make install          # Install to ~/.local/bin (recommended)
+make install PREFIX=/usr/local   # System-wide (requires sudo)
 make uninstall    # Remove installed files
 ```
 
@@ -127,6 +129,15 @@ The test suite includes:
 - Full journal template verification
 
 All tests use `mkstemp()` for safe, isolated file I/O testing.
+
+
+### Philosophy
+
+- One tiny binary (~26KB)
+- Zero external dependencies (standard C + common Unix tools)
+- Built for speed and daily personal use
+- Clean separation: Logic vs Display
+- Proper error handling and exit codes
 
 
 ### Project Structure
@@ -146,15 +157,8 @@ premflow/
 
 ![build](/screenshots/build.sh-2026-04-24_22-30-24.png)
 ![make](/screenshots/make-install-2026-04-24_22-32-44.png)
-![usecase](/screenshots/usecase-2026-04-24_20-09-26.png)
+![usecase](/screenshots/usecase-2026-04-24_23-23-00.png)
 
-### Philosophy
-
-- One tiny binary (~26KB)
-- Zero external dependencies (standard C + common Unix tools)
-- Built for speed and daily personal use
-- Clean separation: Logic vs Display
-- Proper error handling and exit codes
 
 ### Todos
 

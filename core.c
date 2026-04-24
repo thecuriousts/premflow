@@ -191,17 +191,30 @@ void open_editor(const char* filepath) {
 
 void start_pomodoro(int minutes) {
     if (minutes <= 0) minutes = 25;
-    int seconds = minutes * 60;
+    int total_seconds = minutes * 60;
 
+    printf("🍅 Pomodoro started — %d min deep focus! Let's go! 🔥\n", minutes);
     play_sound(sounds.pomo_start);
 
-    for (int i = seconds; i > 0; i--) {
-        printf("\rTime left: %02d:%02d ", i/60, i%60);
+    // Beautiful Unicode circle progress (quarter steps)
+    const char* circle[] = {
+        "○", "◔", "◑", "◕", "●"   // 0%, 25%, 50%, 75%, 100%
+    };
+
+    for (int remaining = total_seconds; remaining > 0; remaining--) {
+        int elapsed = total_seconds - remaining;
+        int percent = (elapsed * 100) / total_seconds;
+
+        // Choose circle based on percentage
+        int idx = percent / 25;
+        if (idx > 4) idx = 4;
+
+        printf("\r%s 🍅  %02d:%02d  %3d%%", circle[idx], remaining/60, remaining%60, percent);
         fflush(stdout);
         sleep(1);
     }
 
-    printf("\n✅ Pomodoro complete! Excellent work.\n");
+    printf("\n✅ Pomodoro complete! Amazing focus, Prem! 🎉\n");
     play_sound(sounds.pomo_complete);
     append_entry(data_path(LOG_FILE), "[POMO]", "Focused work session");
 }
@@ -214,13 +227,13 @@ void list_active_tasks(const char* filepath) {
 
     FILE* f = fopen(filepath, "r");
     if (!f) {
-        printf("No active tasks yet.\n");
+        printf("📭 No active tasks yet. Great job staying on top!\n");
         return;
     }
 
     char line[MAX_LINE];
     int count = 0;
-    printf("=== Active Tasks ===\n");
+    printf("📋 === Active Tasks ===\n");
     while (fgets(line, sizeof(line), f))
         printf("%3d. %s", ++count, line);
     fclose(f);
