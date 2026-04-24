@@ -5,6 +5,16 @@
 **Tiny. Clean. Powerful.**  
 A minimalist productivity CLI tool written in pure C — zero bloat, maximum daily time saved.
 
+### Why you need to use premflow
+
+> Because your tools should get out of the way — not throw a party. premflow 
+> delivers 26KB of pure focus with zero dependencies, zero bloat, and zero 
+> reasons left to procrastinate. Tiny. Clean. Powerful. Like your morning 
+> coffee, but with better error handling. It’s the CLI that respects your time 
+> so much it refuses to waste any of its own — and honestly, installing a 
+> 200MB Electron app just to write “buy milk” is a crime against humanity.
+> Your excuses have nowhere to hide.
+
 ---
 
 ### Features
@@ -28,21 +38,22 @@ git clone https://github.com/thecuriousts/premflow.git
 cd premflow
 
 ./build.sh 
+
+# Run without installing
+./premflow
 ```
 
-####  User-local Install (No sudo)
+#### User-local Install (No sudo)
 
-```bash
-make install
-```
+If you're happy to install it:
 
 > Make sure `~/.local/bin` is in your `PATH`.
 
-#### Run without installing
-
 ```bash
-./premflow
+make install   # installs to ~/.local/bin (default)
 ```
+
+The [Makefile](/Makefile) sets `PREFIX ?= $(HOME)/.local` as the default, so no `sudo` is required for a personal installation.
 
 ### Usage
 
@@ -90,8 +101,8 @@ premflow config sound
 
 #### Example config (`~/.premflow/config.txt`):
 
-Find out your linux distros `PLAYER` and Sounds.
-Update `POMO_START`, `POMO_COMPLETE`, `TASK_COMPLETE`
+Find out your Linux distro's `PLAYER` and sounds.
+Update `POMO_START`, `POMO_COMPLETE`, `TASK_COMPLETE`.
 
 ```ini
 PLAYER=paplay
@@ -104,14 +115,13 @@ Empty value = disable that sound.
 
 ---
 
-
 ### Useful Make Targets
 
 ```bash
 make              # Build the binary
 make test         # Run all 8 comprehensive tests (file I/O mocking)
 make clean        # Remove build artifacts
-make install          # Install to ~/.local/bin (recommended)
+make install          # Install to ~/.local/bin (recommended, uses default PREFIX)
 make install PREFIX=/usr/local   # System-wide (requires sudo)
 make uninstall    # Remove installed files
 ```
@@ -162,8 +172,7 @@ premflow/
 
 ### Todos
 
--  AUR packaging for Arch Linux
-
+- AUR packaging for Arch Linux
 
 ---
 
@@ -171,4 +180,4 @@ premflow/
 
 ---
 
-Made with ❤️ for focused, productive humans.
+Made with ❤️ for focused, productive humans.  
