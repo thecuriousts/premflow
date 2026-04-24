@@ -1,5 +1,7 @@
 # premflow
 
+![premflow](/project-into-picture-grok-image.png)
+
 **Tiny. Clean. Powerful.**  
 A minimalist productivity CLI tool written in pure C — zero bloat, maximum daily time saved.
 
