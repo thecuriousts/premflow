@@ -1,0 +1,75 @@
+PREMFLOW(1)                                                          User Commands                                                          PREMFLOW(1)
+
+NAME
+     premflow - minimalist productivity CLI tool
+
+SYNOPSIS
+     premflow [command] [arguments]
+
+DESCRIPTION
+     premflow  is a tiny, clean, and powerful command-line productivity tool written in pure C.  It helps you manage notes, tasks, pomodoros, journals,
+     and wins with zero bloat.
+
+COMMANDS
+     note   Log a quick note or idea.
+
+     task add
+            Add a new task.
+
+     task list
+            List all active tasks.
+
+     task done <n>
+            Mark task number n as complete.
+
+     win    Log a win or gratitude.
+
+     journal
+            Open today's daily journal (creates template if new).
+
+     pomo [minutes]
+            Start a pomodoro timer (default 25 minutes).
+
+     edit [todo]
+            Open notes or tasks in $EDITOR (default: nano).
+
+     search keyword
+            Search across logs and tasks.
+
+     stats  Show lifetime productivity statistics.
+
+     review
+            Show daily review (recent entries + active tasks).
+
+     config sound
+            Edit sound notification configuration.
+
+FILES
+     ~/.premflow/log.txt
+            Main activity log (notes, wins, pomos, completed tasks).
+
+     ~/.premflow/todo.txt
+            Active task list.
+
+     ~/.premflow/config.txt
+            Sound configuration.
+
+     ~/.premflow/journal/journal-YYYY-MM-DD.txt
+            Daily journal entries.
+
+ENVIRONMENT
+     EDITOR
+            Preferred text editor (defaults to nano).
+
+     HOME   Required for data directory (~/.premflow).
+
+EXIT STATUS
+     premflow returns 0 on success, 1 on error.
+
+AUTHOR
+     Built for focused humans who value simplicity.
+
+SEE ALSO
+     nano(1), paplay(1)
+
+premflow 1.0                                                           April 2026                                                           PREMFLOW(1)
