@@ -1,38 +1,30 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -O2 -std=c99
-PREFIX ?= $(HOME)/.local
+BUILD_DIR ?= build
+ELOMAXZ_SOURCE_DIR ?=
+CMAKE_FLAGS := -B $(BUILD_DIR)
+ifneq ($(ELOMAXZ_SOURCE_DIR),)
+CMAKE_FLAGS += -DELOMAXZ_SOURCE_DIR=$(ELOMAXZ_SOURCE_DIR)
+endif
 
-all: premflow
+.PHONY: all clean test install uninstall configure
 
-premflow: main.o core.o ui.o
-	$(CC) $(CFLAGS) -o premflow main.o core.o ui.o
+configure:
+	cmake $(CMAKE_FLAGS)
 
-main.o: main.c premflow.h
-	$(CC) $(CFLAGS) -c main.c
+all: configure
+	cmake --build $(BUILD_DIR)
 
-core.o: core.c premflow.h
-	$(CC) $(CFLAGS) -c core.c
-
-ui.o: ui.c premflow.h
-	$(CC) $(CFLAGS) -c ui.c
-
-test: test.o core.o
-	$(CC) $(CFLAGS) -o test_runner test.o core.o
-	./test_runner
-
-install: premflow
-	install -d $(PREFIX)/bin
-	install -m 755 premflow $(PREFIX)/bin/premflow
-	@echo "✅ premflow installed to $(PREFIX)/bin/premflow"
-
-uninstall:
-	rm -f $(PREFIX)/bin/premflow
-	rm -f $(PREFIX)/share/man/man1/premflow.1
-	rm -f $(PREFIX)/share/bash-completion/completions/premflow
-	@echo "✅ premflow uninstalled"
+test: all
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 clean:
-	rm -f *.o premflow test_runner
+	rm -rf $(BUILD_DIR)
 
+install: all
+	cmake --install $(BUILD_DIR) --prefix $(or $(PREFIX),$(HOME)/.local)
 
-.PHONY: all clean test install uninstall
+uninstall:
+	rm -f $(or $(PREFIX),$(HOME)/.local)/bin/premflow
+	@echo "✅ premflow uninstalled"
+
+run: all
+	./$(BUILD_DIR)/premflow

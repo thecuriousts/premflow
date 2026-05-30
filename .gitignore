@@ -1,40 +1,24 @@
-# Build output
-premflow
-*.o
-a.out
+# Ignore everything
+*
 
-# Editor / OS
-*.swp
-*~
-.DS_Store
+# But allow these
+!*.c
+!*.h
+!*.md
+!Makefile
+!CMakeLists.txt
+!*.sh
+!LICENSE
+!screenshots/*.png
+!*.png
 
-# Build artifacts
-*.o
-premflow
-test_runner
-*.pkg.tar.*
-*.pkg.tar.zst
 
-# AUR packaging
-src/
-pkg/
-*.SRCINFO
+!docs/
+!docs/**
+!images/
+!images/**
 
-# Editor / OS files
-*~
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# Temporary test files
-/tmp/premflow_*
-
-# Backup files
-*.bak
-*.orig
-
-# Debug / core dumps
-core
-*.core
-vgcore.*
+# GitHub Actions (must un-ignore parent dirs for git to descend)
+!.github/
+!.github/workflows/
+!.github/workflows/**

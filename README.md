@@ -8,7 +8,7 @@ A minimalist productivity CLI tool written in pure C — zero bloat, maximum dai
 ### Why you need to use premflow
 
 > Because your tools should get out of the way — not throw a party. premflow 
-> delivers 26KB of pure focus with zero dependencies, zero bloat, and zero 
+> delivers a small binary with minimal dependencies, zero bloat, and zero 
 > reasons left to procrastinate. Tiny. Clean. Powerful. Like your morning 
 > coffee, but with better error handling. It’s the CLI that respects your time 
 > so much it refuses to waste any of its own — and honestly, installing a 
@@ -33,19 +33,27 @@ A minimalist productivity CLI tool written in pure C — zero bloat, maximum dai
 
 ### Installation
 
+Requires **CMake 3.14+** and a C11 compiler. The [elomaxz](https://github.com/p10ns11y/elomaxz) MVU library is fetched automatically via CMake `FetchContent`.
+
 ```bash
 git clone https://github.com/thecuriousts/premflow.git
 cd premflow
 
-./build.sh 
+./build.sh
 
 # Run without installing
-./premflow
+./build/premflow
+```
+
+**Offline / local elomaxz** (skip network fetch):
+
+```bash
+export ELOMAXZ_SOURCE_DIR=/path/to/elomaxz
+./build.sh
+# or: cmake -B build -DELOMAXZ_SOURCE_DIR=/path/to/elomaxz && cmake --build build
 ```
 
 #### User-local Install (No sudo)
-
-If you're happy to install it:
 
 > Make sure `~/.local/bin` is in your `PATH`.
 
@@ -53,7 +61,7 @@ If you're happy to install it:
 make install   # installs to ~/.local/bin (default)
 ```
 
-The [Makefile](/Makefile) sets `PREFIX ?= $(HOME)/.local` as the default, so no `sudo` is required for a personal installation.
+The [Makefile](/Makefile) wraps CMake and sets `PREFIX ?= $(HOME)/.local` by default.
 
 ### Usage
 
@@ -118,12 +126,20 @@ Empty value = disable that sound.
 ### Useful Make Targets
 
 ```bash
-make              # Build the binary
-make test         # Run all 8 comprehensive tests (file I/O mocking)
-make clean        # Remove build artifacts
-make install          # Install to ~/.local/bin (recommended, uses default PREFIX)
+make              # Configure and build (output in build/)
+make test         # Run all 8 comprehensive tests via ctest
+make clean        # Remove build/ directory
+make install      # Install to ~/.local/bin (recommended)
 make install PREFIX=/usr/local   # System-wide (requires sudo)
-make uninstall    # Remove installed files
+make uninstall    # Remove installed binary
+```
+
+Or with CMake directly:
+
+```bash
+cmake -B build && cmake --build build
+ctest --test-dir build --output-on-failure
+cmake --install build --prefix ~/.local
 ```
 
 ### Testing
@@ -143,10 +159,10 @@ All tests use `mkstemp()` for safe, isolated file I/O testing.
 
 ### Philosophy
 
-- One tiny binary (~26KB)
-- Zero external dependencies (standard C + common Unix tools)
+- One small binary
+- [elomaxz](https://github.com/p10ns11y/elomaxz) MVU core (functional update + imperative effects) + standard C + common Unix tools
 - Built for speed and daily personal use
-- Clean separation: Logic vs Display
+- Clean separation: update/view (app) vs effects (I/O) vs display helpers (ui)
 - Proper error handling and exit codes
 
 
@@ -154,12 +170,15 @@ All tests use `mkstemp()` for safe, isolated file I/O testing.
 
 ```
 premflow/
-├── premflow.h
-├── main.c          # CLI entry point
+├── premflow.h      # Shared types and core/ui API
+├── main.c          # Bootstrap + argv → message + elomaxz_run_batch
+├── app.c / app.h   # Model, messages, init/update/view
+├── effects.c       # handle_cmd — file I/O, editor, pomodoro
 ├── core.c          # Business logic + error handling
 ├── ui.c            # Display / output functions
 ├── test.c          # Comprehensive test suite
-├── Makefile
+├── CMakeLists.txt  # FetchContent(elomaxz) + targets
+├── Makefile        # Thin CMake wrapper
 ├── README.md
 ```
 

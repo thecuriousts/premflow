@@ -1,0 +1,45 @@
+# Pinned action SHAs (not @v6 tags) for supply-chain reproducibility.
+# actions/checkout v6.0.2 → de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Configure with CMake
+        run: cmake -B build-cmake -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build with CMake
+        run: cmake --build build-cmake --parallel
+
+      - name: Verify CMake artifacts
+        run: |
+          test -x build-cmake/premflow
+          test -x build-cmake/test_runner
+
+      - name: Test (CMake build)
+        run: ctest --test-dir build-cmake --output-on-failure
+
+      - name: Clean Makefile build directory
+        run: make clean
+
+      - name: Configure and build with Makefile
+        run: make all
+
+      - name: Verify Makefile artifacts
+        run: |
+          test -x build/premflow
+          test -x build/test_runner
+
+      - name: Test (Makefile build)
+        run: make test
