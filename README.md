@@ -174,16 +174,18 @@ All tests use `mkstemp()` for safe, isolated file I/O testing.
 
 ```
 premflow/
-├── premflow.h      # Shared types and core/ui API
-├── main.c          # Bootstrap + argv → message + elomaxz_run_batch
-├── app.c / app.h   # Model, messages, init/update/view
-├── effects.c       # handle_cmd — file I/O, editor, pomodoro
-├── core.c          # Business logic + error handling
-├── ui.c            # Display / output functions
-├── test.c          # Comprehensive test suite
+├── src/
+│   ├── premflow.h  # Shared types and core/ui API
+│   ├── main.c      # Bootstrap + argv → message + elomaxz_run_batch
+│   ├── app.c/h     # Model, messages, init/update/view
+│   ├── effects.c   # handle_cmd — file I/O, editor, pomodoro
+│   ├── core.c      # Business logic + error handling
+│   └── ui.c        # Display / output functions
+├── tests/
+│   └── test.c      # Comprehensive test suite
 ├── CMakeLists.txt  # FetchContent(elomaxz) + targets
 ├── Makefile        # Thin CMake wrapper
-├── README.md
+└── README.md
 ```
 
 ### Screenshots

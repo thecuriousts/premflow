@@ -5,7 +5,15 @@ ifneq ($(ELOMAXZ_SOURCE_DIR),)
 CMAKE_FLAGS += -DELOMAXZ_SOURCE_DIR=$(ELOMAXZ_SOURCE_DIR)
 endif
 
-SRC := main.c app.c app.h effects.c core.c ui.c test.c premflow.h
+SRC := \
+	src/main.c \
+	src/app.c \
+	src/app.h \
+	src/effects.c \
+	src/core.c \
+	src/ui.c \
+	src/premflow.h \
+	tests/test.c
 
 .PHONY: all clean test install uninstall configure format format-check
 

@@ -4,6 +4,8 @@ project(premflow VERSION 0.2.0 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+set(PREMFLOW_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 include(FetchContent)
 
 set(ELOMAXZ_SOURCE_DIR "" CACHE PATH "Use local elomaxz clone instead of fetching from GitHub")
@@ -30,17 +32,22 @@ if(NOT TARGET elomaxz)
 endif()
 
 add_executable(premflow
-    main.c
-    app.c
-    effects.c
-    core.c
-    ui.c
+    src/main.c
+    src/app.c
+    src/effects.c
+    src/core.c
+    src/ui.c
 )
+target_include_directories(premflow PRIVATE ${PREMFLOW_SRC_DIR})
 target_link_libraries(premflow PRIVATE elomaxz)
 target_compile_features(premflow PUBLIC c_std_11)
 target_compile_options(premflow PRIVATE -Wall -Wextra -O2)
 
-add_executable(test_runner test.c core.c)
+add_executable(test_runner
+    tests/test.c
+    src/core.c
+)
+target_include_directories(test_runner PRIVATE ${PREMFLOW_SRC_DIR})
 target_compile_features(test_runner PUBLIC c_std_11)
 target_compile_options(test_runner PRIVATE -Wall -Wextra -O2)
 

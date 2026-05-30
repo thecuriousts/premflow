@@ -2,8 +2,10 @@
 *
 
 # But allow these
-!*.c
-!*.h
+!src/
+!src/**
+!tests/
+!tests/**
 !*.md
 !Makefile
 !CMakeLists.txt
