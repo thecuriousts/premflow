@@ -169,6 +169,23 @@ All tests use `mkstemp()` for safe, isolated file I/O testing.
 - Clean separation: update/view (app) vs effects (I/O) vs display helpers (ui)
 - Proper error handling and exit codes
 
+### Architecture (MVU + `elomaxz_run_batch`)
+
+premflow is a **one-shot CLI**: each run is one shell command, one exit code. elomaxz exposes six public functions; premflow uses **`elomaxz_run_batch`** as the entry runner and **`elomaxz_make_cmd`** inside `update` (effects run via **`elomaxz_execute_cmds`** → `handle_cmd`).
+
+| Function | premflow |
+|----------|----------|
+| `elomaxz_run_batch` | **Yes** — one `PremflowMsg` from `argv` (`count == 1`) |
+| `elomaxz_make_cmd` | **Yes** — `CMD_CUSTOM` + `EffectPayload` in `app.c` |
+| `elomaxz_execute_cmds` | Indirect — called by `run_batch`; `pf_handle_cmd` in `effects.c` |
+| `elomaxz_run_with_msg_source` | No — REPL / stdin loop (counter demo pattern) |
+| `elomaxz_run_cli` | No — demo stub only |
+| `elomaxz_print_prompt` | No — no in-app REPL prompt |
+
+Flow: `parse_argv` → `elomaxz_run_batch` → `update` + `make_cmd` → `execute_cmds` → `view`. argv-driven, not a stdin REPL.
+
+Full rationale, **elomaxz API reference** (`run_cli`, `run_with_msg_source`, `run_batch`, `execute_cmds`, `make_cmd`, `print_prompt`), diagrams, and trade-offs: **[docs/architecture.md](docs/architecture.md)**.
+
 
 ### Project Structure
 
@@ -183,6 +200,8 @@ premflow/
 │   └── ui.c        # Display / output functions
 ├── tests/
 │   └── test.c      # Comprehensive test suite
+├── docs/
+│   └── architecture.md  # Why elomaxz_run_batch, runner comparison
 ├── CMakeLists.txt  # FetchContent(elomaxz) + targets
 ├── Makefile        # Thin CMake wrapper
 └── README.md

@@ -35,6 +35,7 @@ int main(
         .user_data = &runtime,
     };
 
+    /* One argv → one message; see docs/architecture.md for runner choice. */
     elomaxz_run_batch(&prog, (Msg *) &msg, 1);
 
     runtime = *premflow_runtime_get();
