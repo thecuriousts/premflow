@@ -1,6 +1,6 @@
 # premflow
 
-![premflow](/project-intro-picture-grok-image.png)
+![premflow](images/project-intro-picture-grok-image.png)
 
 **Tiny. Clean. Powerful.**  
 A minimalist productivity CLI tool written in pure C — zero bloat, maximum daily time saved.
@@ -28,7 +28,7 @@ A minimalist productivity CLI tool written in pure C — zero bloat, maximum dai
 - 📊 Personal stats dashboard
 - ⚙️ Customizable sounds via config
 
-![usecase polished](/usecase.png)
+![usecase polished](images/usecase.png)
 
 
 ### Installation
