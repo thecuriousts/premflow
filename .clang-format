@@ -1,0 +1,29 @@
+BasedOnStyle: LLVM
+Language: C
+IndentWidth: 4
+ColumnLimit: 88
+
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+InsertBraces: true
+
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
+SeparateDefinitionBlocks: Always
+
+# Blank lines before/after if and else are not auto-inserted — add them by hand;
+# clang-format preserves them (up to MaxEmptyLinesToKeep).
+
+IndentCaseLabels: true
+BreakBeforeBraces: Attach
+
+PointerAlignment: Right
+SpaceAfterCStyleCast: true
+
+# One parameter per line; opening ( on same line as name, closing ) before {
+BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakFunctionDefinitionParameters: true
+BreakBeforeCloseBracketFunction: true

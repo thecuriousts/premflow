@@ -1,10 +1,10 @@
 #include "premflow.h"
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <errno.h>
 
 SoundConfig sounds = {0};
 
@@ -12,19 +12,31 @@ SoundConfig sounds = {0};
 // String Utilities
 // ==================================================================
 
-char* ltrim(char* s) {
-    while (*s == ' ' || *s == '\t' || *s == '\n') s++;
+char *ltrim(
+    char *s
+) {
+    while (*s == ' ' || *s == '\t' || *s == '\n') {
+        s++;
+    }
     return s;
 }
 
-void rtrim(char* s) {
-    if (!s || !*s) return;
-    char* end = s + strlen(s) - 1;
-    while (end > s && (*end == ' ' || *end == '\t' || *end == '\n')) *end-- = '\0';
+void rtrim(
+    char *s
+) {
+    if (!s || !*s) {
+        return;
+    }
+    char *end = s + strlen(s) - 1;
+    while (end > s && (*end == ' ' || *end == '\t' || *end == '\n')) {
+        *end-- = '\0';
+    }
 }
 
-char* trim(char* s) {
-    char* start = ltrim(s);
+char *trim(
+    char *s
+) {
+    char *start = ltrim(s);
     rtrim(start);
     return start;
 }
@@ -33,9 +45,11 @@ char* trim(char* s) {
 // Paths
 // ==================================================================
 
-char* data_path(const char* filename) {
+char *data_path(
+    const char *filename
+) {
     static char path[512];
-    char* home = getenv("HOME");
+    char *home = getenv("HOME");
     if (!home) {
         fprintf(stderr, "Error: HOME environment variable not set\n");
         return NULL;
@@ -44,16 +58,18 @@ char* data_path(const char* filename) {
     return path;
 }
 
-char* journal_path(void) {
+char *journal_path(
+    void
+) {
     static char path[512];
-    char* home = getenv("HOME");
+    char *home = getenv("HOME");
     if (!home) {
         fprintf(stderr, "Error: HOME environment variable not set\n");
         return NULL;
     }
 
     time_t now = time(NULL);
-    struct tm* tm = localtime(&now);
+    struct tm *tm = localtime(&now);
     char date[32];
     strftime(date, sizeof(date), "%Y-%m-%d", tm);
 
@@ -65,26 +81,38 @@ char* journal_path(void) {
 // Config
 // ==================================================================
 
-void create_config_template(const char* path) {
-    FILE* f = fopen(path, "w");
+void create_config_template(
+    const char *path
+) {
+    FILE *f = fopen(path, "w");
     if (!f) {
         fprintf(stderr, "Error: Could not create config file at %s\n", path);
         return;
     }
-    fprintf(f, "# premflow Sound Configuration\n"
-               "# Leave empty to disable\n\n"
-               "PLAYER=paplay\n"
-               "POMO_START=paplay /usr/share/sounds/freedesktop/stereo/phone-incoming-call.oga >/dev/null 2>&1\n"
-               "POMO_COMPLETE=paplay /usr/share/sounds/freedesktop/stereo/complete.oga >/dev/null 2>&1\n"
-               "TASK_COMPLETE=paplay /usr/share/sounds/freedesktop/stereo/bell.oga >/dev/null 2>&1\n");
+    fprintf(
+        f,
+        "# premflow Sound Configuration\n"
+        "# Leave empty to disable\n\n"
+        "PLAYER=paplay\n"
+        "POMO_START=paplay "
+        "/usr/share/sounds/freedesktop/stereo/phone-incoming-call.oga >/dev/null 2>&1\n"
+        "POMO_COMPLETE=paplay /usr/share/sounds/freedesktop/stereo/complete.oga "
+        ">/dev/null 2>&1\n"
+        "TASK_COMPLETE=paplay /usr/share/sounds/freedesktop/stereo/bell.oga >/dev/null "
+        "2>&1\n"
+    );
     fclose(f);
 }
 
-void read_config(void) {
-    char* path = data_path(CONFIG_FILE);
-    if (!path) return;
+void read_config(
+    void
+) {
+    char *path = data_path(CONFIG_FILE);
+    if (!path) {
+        return;
+    }
 
-    FILE* f = fopen(path, "r");
+    FILE *f = fopen(path, "r");
     if (!f) {
         create_config_template(path);
         return;
@@ -92,24 +120,31 @@ void read_config(void) {
 
     char line[512];
     while (fgets(line, sizeof(line), f)) {
-        if (line[0] == '#' || line[0] == '\n' || line[0] == '\0') continue;
-        char* eq = strchr(line, '=');
-        if (!eq) continue;
+        if (line[0] == '#' || line[0] == '\n' || line[0] == '\0') {
+            continue;
+        }
+        char *eq = strchr(line, '=');
+        if (!eq) {
+            continue;
+        }
 
         *eq = '\0';
-        char* key = trim(line);
-        char* val = trim(eq + 1);
+        char *key = trim(line);
+        char *val = trim(eq + 1);
 
-        if (!*key) continue;
+        if (!*key) {
+            continue;
+        }
 
-        if (strcmp(key, "PLAYER") == 0)
-            strncpy(sounds.player, val, sizeof(sounds.player)-1);
-        else if (strcmp(key, "POMO_START") == 0)
-            strncpy(sounds.pomo_start, val, sizeof(sounds.pomo_start)-1);
-        else if (strcmp(key, "POMO_COMPLETE") == 0)
-            strncpy(sounds.pomo_complete, val, sizeof(sounds.pomo_complete)-1);
-        else if (strcmp(key, "TASK_COMPLETE") == 0)
-            strncpy(sounds.task_complete, val, sizeof(sounds.task_complete)-1);
+        if (strcmp(key, "PLAYER") == 0) {
+            strncpy(sounds.player, val, sizeof(sounds.player) - 1);
+        } else if (strcmp(key, "POMO_START") == 0) {
+            strncpy(sounds.pomo_start, val, sizeof(sounds.pomo_start) - 1);
+        } else if (strcmp(key, "POMO_COMPLETE") == 0) {
+            strncpy(sounds.pomo_complete, val, sizeof(sounds.pomo_complete) - 1);
+        } else if (strcmp(key, "TASK_COMPLETE") == 0) {
+            strncpy(sounds.task_complete, val, sizeof(sounds.task_complete) - 1);
+        }
     }
     fclose(f);
 }
@@ -118,8 +153,10 @@ void read_config(void) {
 // Core Logic with better error handling
 // ==================================================================
 
-bool ensure_dirs(void) {
-    char* home = getenv("HOME");
+bool ensure_dirs(
+    void
+) {
+    char *home = getenv("HOME");
     if (!home) {
         fprintf(stderr, "Error: HOME not set\n");
         return false;
@@ -142,17 +179,23 @@ bool ensure_dirs(void) {
     return true;
 }
 
-bool append_entry(const char* filepath, const char* prefix, const char* text) {
-    if (!filepath || !prefix || !text) return false;
+bool append_entry(
+    const char *filepath,
+    const char *prefix,
+    const char *text
+) {
+    if (!filepath || !prefix || !text) {
+        return false;
+    }
 
-    FILE* f = fopen(filepath, "a");
+    FILE *f = fopen(filepath, "a");
     if (!f) {
         fprintf(stderr, "Error: Could not open %s for writing\n", filepath);
         return false;
     }
 
     time_t now = time(NULL);
-    struct tm* tm = localtime(&now);
+    struct tm *tm = localtime(&now);
     char ts[64];
     strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M", tm);
 
@@ -164,7 +207,9 @@ bool append_entry(const char* filepath, const char* prefix, const char* text) {
     return true;
 }
 
-void play_sound(const char* command) {
+void play_sound(
+    const char *command
+) {
     if (command && command[0]) {
         int ret = system(command);
         if (ret != 0) {
@@ -173,11 +218,17 @@ void play_sound(const char* command) {
     }
 }
 
-void open_editor(const char* filepath) {
-    if (!filepath) return;
+void open_editor(
+    const char *filepath
+) {
+    if (!filepath) {
+        return;
+    }
 
-    char* editor = getenv("EDITOR");
-    if (!editor || !*editor) editor = "nano";
+    char *editor = getenv("EDITOR");
+    if (!editor || !*editor) {
+        editor = "nano";
+    }
 
     char cmd[1024];
     snprintf(cmd, sizeof(cmd), "%s \"%s\"", editor, filepath);
@@ -189,16 +240,20 @@ void open_editor(const char* filepath) {
     printf("✅ Saved.\n");
 }
 
-void start_pomodoro(int minutes) {
-    if (minutes <= 0) minutes = 25;
+void start_pomodoro(
+    int minutes
+) {
+    if (minutes <= 0) {
+        minutes = 25;
+    }
     int total_seconds = minutes * 60;
 
     printf("🍅 Pomodoro started — %d min deep focus! Let's go! 🔥\n", minutes);
     play_sound(sounds.pomo_start);
 
     // Beautiful Unicode circle progress (quarter steps)
-    const char* circle[] = {
-        "○", "◔", "◑", "◕", "●"   // 0%, 25%, 50%, 75%, 100%
+    const char *circle[] = {
+        "○", "◔", "◑", "◕", "●" // 0%, 25%, 50%, 75%, 100%
     };
 
     for (int remaining = total_seconds; remaining > 0; remaining--) {
@@ -207,9 +262,12 @@ void start_pomodoro(int minutes) {
 
         // Choose circle based on percentage
         int idx = percent / 25;
-        if (idx > 4) idx = 4;
+        if (idx > 4) {
+            idx = 4;
+        }
 
-        printf("\r%s 🍅  %02d:%02d  %3d%%", circle[idx], remaining/60, remaining%60, percent);
+        printf("\r%s 🍅  %02d:%02d  %3d%%", circle[idx], remaining / 60, remaining % 60,
+               percent);
         fflush(stdout);
         sleep(1);
     }
@@ -219,13 +277,15 @@ void start_pomodoro(int minutes) {
     append_entry(data_path(LOG_FILE), "[POMO]", "Focused work session");
 }
 
-void list_active_tasks(const char* filepath) {
+void list_active_tasks(
+    const char *filepath
+) {
     if (!filepath) {
         printf("Error: No filepath provided\n");
         return;
     }
 
-    FILE* f = fopen(filepath, "r");
+    FILE *f = fopen(filepath, "r");
     if (!f) {
         printf("📭 No active tasks yet. Great job staying on top!\n");
         return;
@@ -234,23 +294,31 @@ void list_active_tasks(const char* filepath) {
     char line[MAX_LINE];
     int count = 0;
     printf("📋 === Active Tasks ===\n");
-    while (fgets(line, sizeof(line), f))
+    while (fgets(line, sizeof(line), f)) {
         printf("%3d. %s", ++count, line);
+    }
     fclose(f);
 
-    if (count == 0) printf("No tasks — you're crushing it!\n");
+    if (count == 0) {
+        printf("No tasks — you're crushing it!\n");
+    }
 }
 
-bool complete_task(const char* filepath, int task_num) {
-    if (!filepath || task_num <= 0) return false;
+bool complete_task(
+    const char *filepath,
+    int task_num
+) {
+    if (!filepath || task_num <= 0) {
+        return false;
+    }
 
-    FILE* f = fopen(filepath, "r");
+    FILE *f = fopen(filepath, "r");
     if (!f) {
         fprintf(stderr, "Error: Could not open task file\n");
         return false;
     }
 
-    FILE* tmp = tmpfile();
+    FILE *tmp = tmpfile();
     if (!tmp) {
         fclose(f);
         fprintf(stderr, "Error: Could not create temporary file\n");
@@ -285,12 +353,16 @@ bool complete_task(const char* filepath, int task_num) {
 
     rewind(tmp);
     char c;
-    while ((c = fgetc(tmp)) != EOF) fputc(c, f);
+    while ((c = fgetc(tmp)) != EOF) {
+        fputc(c, f);
+    }
     fclose(f);
     fclose(tmp);
 
-    char* clean = trim(task_buf);
-    if (strncmp(clean, "[TODO]", 6) == 0) clean += 6;
+    char *clean = trim(task_buf);
+    if (strncmp(clean, "[TODO]", 6) == 0) {
+        clean += 6;
+    }
     clean = trim(clean);
 
     append_entry(data_path(LOG_FILE), "[DONE]", clean);

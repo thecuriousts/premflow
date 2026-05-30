@@ -3,7 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(int argc, char *argv[]) {
+int main(
+    int argc,
+    char *argv[]
+) {
     if (!ensure_dirs()) {
         fprintf(stderr, "Failed to initialize directories. Exiting.\n");
         return 1;
@@ -32,7 +35,7 @@ int main(int argc, char *argv[]) {
         .user_data = &runtime,
     };
 
-    elomaxz_run_batch(&prog, (Msg *)&msg, 1);
+    elomaxz_run_batch(&prog, (Msg *) &msg, 1);
 
     runtime = *premflow_runtime_get();
     return runtime.exit_code;

@@ -128,11 +128,15 @@ Empty value = disable that sound.
 ```bash
 make              # Configure and build (output in build/)
 make test         # Run all 8 comprehensive tests via ctest
+make format       # Apply clang-format to all sources (.clang-format)
+make format-check # Fail if sources are not formatted (used in CI)
 make clean        # Remove build/ directory
 make install      # Install to ~/.local/bin (recommended)
 make install PREFIX=/usr/local   # System-wide (requires sudo)
 make uninstall    # Remove installed binary
 ```
+
+Formatting uses [clang-format](https://clang.llvm.org/docs/ClangFormat.html) with the repo `.clang-format` config (requires `clang` on PATH).
 
 Or with CMake directly:
 

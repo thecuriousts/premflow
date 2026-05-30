@@ -1,26 +1,28 @@
 #define _POSIX_C_SOURCE 200809L
 #include "premflow.h"
-#include <stdio.h>
 #include <assert.h>
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 static int tests_passed = 0;
 static int tests_failed = 0;
 
-#define TEST(name) \
-    printf("Running " #name "... "); \
-    if (name()) { \
-        printf("✅ PASSED\n"); \
-        tests_passed++; \
-    } else { \
-        printf("❌ FAILED\n"); \
-        tests_failed++; \
+#define TEST(name)                                                                     \
+    printf("Running " #name "... ");                                                   \
+    if (name()) {                                                                      \
+        printf("✅ PASSED\n");                                                         \
+        tests_passed++;                                                                \
+    } else {                                                                           \
+        printf("❌ FAILED\n");                                                         \
+        tests_failed++;                                                                \
     }
 
-bool test_trim(void) {
+bool test_trim(
+    void
+) {
     char s1[] = "  hello world  \n";
     assert(strcmp(trim(s1), "hello world") == 0);
 
@@ -36,14 +38,18 @@ bool test_trim(void) {
     return true;
 }
 
-bool test_data_path(void) {
-    char* path = data_path("test.txt");
+bool test_data_path(
+    void
+) {
+    char *path = data_path("test.txt");
     assert(path != NULL);
     assert(strstr(path, ".premflow/test.txt") != NULL);
     return true;
 }
 
-bool test_append_and_read(void) {
+bool test_append_and_read(
+    void
+) {
     // Use a temporary file for testing
     char tmpfile[] = "/tmp/premflow_test_XXXXXX";
     int fd = mkstemp(tmpfile);
@@ -54,7 +60,7 @@ bool test_append_and_read(void) {
     assert(ok == true);
 
     // Read back
-    FILE* f = fopen(tmpfile, "r");
+    FILE *f = fopen(tmpfile, "r");
     assert(f != NULL);
 
     char line[256];
@@ -68,13 +74,15 @@ bool test_append_and_read(void) {
     return true;
 }
 
-bool test_complete_task(void) {
+bool test_complete_task(
+    void
+) {
     char tmpfile[] = "/tmp/premflow_todo_XXXXXX";
     int fd = mkstemp(tmpfile);
     close(fd);
 
     // Create sample todo file
-    FILE* f = fopen(tmpfile, "w");
+    FILE *f = fopen(tmpfile, "w");
     fprintf(f, "[TODO] First task\n");
     fprintf(f, "[TODO] Second task\n");
     fprintf(f, "[TODO] Third task\n");
@@ -98,20 +106,24 @@ bool test_complete_task(void) {
     return true;
 }
 
-bool test_config_template(void) {
+bool test_config_template(
+    void
+) {
     char tmpfile[] = "/tmp/premflow_config_XXXXXX";
     int fd = mkstemp(tmpfile);
     close(fd);
 
     create_config_template(tmpfile);
 
-    FILE* f = fopen(tmpfile, "r");
+    FILE *f = fopen(tmpfile, "r");
     assert(f != NULL);
 
     char line[256];
     bool has_player = false;
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, "PLAYER=")) has_player = true;
+        if (strstr(line, "PLAYER=")) {
+            has_player = true;
+        }
     }
     fclose(f);
 
@@ -120,15 +132,19 @@ bool test_config_template(void) {
     return true;
 }
 
-bool test_journal_path(void) {
-    char* path = journal_path();
+bool test_journal_path(
+    void
+) {
+    char *path = journal_path();
     assert(path != NULL);
     assert(strstr(path, "journal-") != NULL);
     assert(strstr(path, ".txt") != NULL);
     return true;
 }
 
-bool test_pomodoro_logic(void) {
+bool test_pomodoro_logic(
+    void
+) {
     // We only verify the function accepts edge-case inputs
     // without starting the actual timer (which would block).
     // The real timer logic is tested manually.
@@ -136,25 +152,29 @@ bool test_pomodoro_logic(void) {
     return true;
 }
 
-bool test_journal_creation(void) {
+bool test_journal_creation(
+    void
+) {
     char tmp_journal[] = "/tmp/premflow_journal_XXXXXX";
     int fd = mkstemp(tmp_journal);
     close(fd);
 
     // Simulate journal creation logic
-    FILE* f = fopen(tmp_journal, "w");
+    FILE *f = fopen(tmp_journal, "w");
     assert(f != NULL);
 
     time_t now = time(NULL);
-    struct tm* tm = localtime(&now);
+    struct tm *tm = localtime(&now);
     char date[64];
     strftime(date, sizeof(date), "%A, %B %d, %Y", tm);
 
-    fprintf(f, "# 🌟 Daily Journal — %s\n\n"
-               "🙏 Grateful for:\n1. \n2. \n3. \n\n"
-               "📚 Learned today:\n\n"
-               "🚀 Tomorrow's intention:\n\n"
-               "💡 Today's win:\n\n", date);
+    fprintf(f,
+            "# 🌟 Daily Journal — %s\n\n"
+            "🙏 Grateful for:\n1. \n2. \n3. \n\n"
+            "📚 Learned today:\n\n"
+            "🚀 Tomorrow's intention:\n\n"
+            "💡 Today's win:\n\n",
+            date);
     fclose(f);
 
     // Verify content
@@ -162,7 +182,9 @@ bool test_journal_creation(void) {
     char line[256];
     bool has_grateful = false;
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, "Grateful for")) has_grateful = true;
+        if (strstr(line, "Grateful for")) {
+            has_grateful = true;
+        }
     }
     fclose(f);
 
@@ -171,7 +193,9 @@ bool test_journal_creation(void) {
     return true;
 }
 
-int main(void) {
+int main(
+    void
+) {
     printf("=== premflow Comprehensive Tests (with file I/O) ===\n\n");
 
     TEST(test_trim);
