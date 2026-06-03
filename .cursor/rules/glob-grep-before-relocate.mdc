@@ -1,0 +1,18 @@
+---
+description: Glob and Grep before moving C sources or changing CMake paths
+alwaysApply: false
+---
+
+# Glob + Grep before relocate
+
+Corpus: **Read → Glob** (7×) and **Grep → Read** (7×) precede layout refactors; gold session moved scattered root `.c` files into `src/`.
+
+Before moving, renaming, or adding files under `src/`:
+
+1. **Glob** current tree (`*.c`, `*.h`, `CMakeLists.txt`).
+2. **Grep** for each symbol/path you will change (includes, `add_executable`, `#include`).
+3. **Read** `CMakeLists.txt` and every file that references moved paths.
+4. Apply **Write** / **StrReplace** across all hits in one pass.
+5. **Shell** configure/build before marking the relocate done.
+
+Do not move a single file without updating CMake and all include paths.

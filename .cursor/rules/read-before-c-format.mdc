@@ -1,0 +1,16 @@
+---
+description: Read full C function before editing signatures hit by ColumnLimit
+alwaysApply: false
+---
+
+# Read before C signature edit
+
+Gold turn: ColumnLimit wrapped `model_new`-style parameters; fix required reading the full function, not a partial line replace.
+
+Before **StrReplace** on C function declarations or call sites:
+
+1. **Read** the whole function (or struct block) in the source file.
+2. Prefer multi-line signatures that stay within style limits — do not truncate parameter names.
+3. **Shell** build after signature changes; compiler errors often point at the real layout issue.
+
+Pair with `cmake-build-verify` — build is mandatory after signature edits.
