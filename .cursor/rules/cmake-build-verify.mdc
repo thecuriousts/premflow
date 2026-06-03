@@ -1,0 +1,15 @@
+---
+description: After CMake or C source changes, run a build before marking done
+globs: "**/CMakeLists.txt,**/*.c,**/*.h"
+alwaysApply: false
+---
+
+# CMake / C build verify
+
+This project uses CMake + elomaxz-style C. After editing `CMakeLists.txt`, `app.c`, or headers:
+
+1. Configure/build with the project's documented command (e.g. `cmake --build build`).
+2. Fix compile errors before summarizing — ColumnLimit and function signatures often need read-before-patch.
+3. Do not claim MVU/refactor steps are complete without a successful build.
+
+For layout issues (e.g. ColumnLimit wrapping parameters), read the surrounding function in `app.c` before applying StrReplace.
