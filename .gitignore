@@ -16,6 +16,8 @@
 !*.png
 
 
+!designs/
+!designs/**
 !docs/
 !docs/**
 !images/
@@ -25,3 +27,6 @@
 !.github/
 !.github/workflows/
 !.github/workflows/**
+
+# AI / stellarfusion state (never commit - contains fused project knowledge)
+.stellarfusion/

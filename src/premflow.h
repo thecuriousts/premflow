@@ -39,13 +39,13 @@ void play_sound(const char *command);
 void open_editor(const char *filepath);
 
 void start_pomodoro(int minutes);
-void list_active_tasks(const char *filepath);
+void list_active_tasks(const char *filepath, int max_to_show); /* max_to_show <=0 means all */
 bool complete_task(const char *filepath, int task_num);
 
 // UI
 void show_help(void);
 void show_stats(void);
-void show_review(void);
+void show_review(int full);
 void show_search(const char *term);
 
 #endif

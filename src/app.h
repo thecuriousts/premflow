@@ -28,6 +28,7 @@ typedef struct {
     int task_num;
     int pomo_minutes;
     int edit_todo; /* 1 = todo file, 0 = log file */
+    int review_full; /* 1 = show everything including all POMO, raw tail */
 } PremflowMsg;
 
 typedef enum {
@@ -44,6 +45,7 @@ typedef struct {
     DisplayKind display;
     char feedback[MAX_LINE];
     char search_term[MAX_LINE];
+    int review_full; /* forwarded from msg for smart vs full review */
 } PremflowModel;
 
 typedef enum {

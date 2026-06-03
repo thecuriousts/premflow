@@ -188,7 +188,13 @@ Model pf_update(
             return (Model) model_new(0, DISPLAY_STATS, NULL);
 
         case PF_MSG_REVIEW:
-            return (Model) model_new(0, DISPLAY_REVIEW, NULL);
+            {
+                PremflowModel *rm = model_new(0, DISPLAY_REVIEW, NULL);
+                if (rm) {
+                    rm->review_full = m->review_full;
+                }
+                return (Model) rm;
+            }
 
         case PF_MSG_CONFIG_SOUND:
             emit_effect(cmds_out, num_cmds_out, EFFECT_CONFIG_SOUND, NULL, 0, 0);
@@ -215,7 +221,7 @@ void pf_view(
             show_stats();
             break;
         case DISPLAY_REVIEW:
-            show_review();
+            show_review(m->review_full);
             break;
         case DISPLAY_SEARCH:
             if (m->search_term[0]) {
@@ -223,7 +229,7 @@ void pf_view(
             }
             break;
         case DISPLAY_TASK_LIST:
-            list_active_tasks(data_path(TODO_FILE));
+            list_active_tasks(data_path(TODO_FILE), 0);
             break;
         default:
             break;
@@ -367,6 +373,13 @@ PremflowMsg *parse_argv(
         msg->type = PF_MSG_STATS;
     } else if (strcmp(cmd, "review") == 0) {
         msg->type = PF_MSG_REVIEW;
+        if (argc > 2) {
+            const char *arg = argv[2];
+            if (strcmp(arg, "--full") == 0 || strcmp(arg, "full") == 0 ||
+                strcmp(arg, "--all") == 0 || strcmp(arg, "all") == 0) {
+                msg->review_full = 1;
+            }
+        }
     } else if (strcmp(cmd, "config") == 0 && argc > 2 &&
                strcmp(argv[2], "sound") == 0) {
         msg->type = PF_MSG_CONFIG_SOUND;
