@@ -187,14 +187,13 @@ Model pf_update(
         case PF_MSG_STATS:
             return (Model) model_new(0, DISPLAY_STATS, NULL);
 
-        case PF_MSG_REVIEW:
-            {
-                PremflowModel *rm = model_new(0, DISPLAY_REVIEW, NULL);
-                if (rm) {
-                    rm->review_full = m->review_full;
-                }
-                return (Model) rm;
+        case PF_MSG_REVIEW: {
+            PremflowModel *rm = model_new(0, DISPLAY_REVIEW, NULL);
+            if (rm) {
+                rm->review_full = m->review_full;
             }
+            return (Model) rm;
+        }
 
         case PF_MSG_CONFIG_SOUND:
             emit_effect(cmds_out, num_cmds_out, EFFECT_CONFIG_SOUND, NULL, 0, 0);
@@ -228,9 +227,12 @@ void pf_view(
                 show_search(m->search_term);
             }
             break;
-        case DISPLAY_TASK_LIST:
-            list_active_tasks(data_path(TODO_FILE), 0);
+        case DISPLAY_TASK_LIST: {
+            const char *todo_path = data_path(TODO_FILE);
+            const int max_to_show = DEFAULT_TASK_LIST_MAX_TO_SHOW;
+            list_active_tasks(todo_path, max_to_show);
             break;
+        }
         default:
             break;
     }

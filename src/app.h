@@ -27,7 +27,7 @@ typedef struct {
     char text[MAX_LINE];
     int task_num;
     int pomo_minutes;
-    int edit_todo; /* 1 = todo file, 0 = log file */
+    int edit_todo;   /* 1 = todo file, 0 = log file */
     int review_full; /* 1 = show everything including all POMO, raw tail */
 } PremflowMsg;
 

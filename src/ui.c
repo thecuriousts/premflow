@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define C_RESET  "\033[0m"
-#define C_BOLD   "\033[1m"
-#define C_DIM    "\033[2m"
-#define C_GREEN  "\033[32m"
+#define C_RESET "\033[0m"
+#define C_BOLD "\033[1m"
+#define C_DIM "\033[2m"
+#define C_GREEN "\033[32m"
 #define C_YELLOW "\033[33m"
-#define C_BLUE   "\033[34m"
-#define C_CYAN   "\033[36m"
-#define C_MAG    "\033[35m"
+#define C_BLUE "\033[34m"
+#define C_CYAN "\033[36m"
+#define C_MAG "\033[35m"
 
 void show_help(
     void
@@ -87,16 +87,26 @@ void show_review(
                  log_path);
         system(cmd);
         puts("\n📋 Active Tasks (all):");
-        list_active_tasks(todo_path, 0);
+        {
+            const int max_to_show = DEFAULT_TASK_LIST_MAX_TO_SHOW;
+            list_active_tasks(todo_path, max_to_show);
+        }
         return;
     }
 
     /* === SMART DEFAULT: curated, highlighted, high-priority first === */
-    printf(C_DIM " (smart view — pomos grouped, focus on signal. Add --full for raw.)\n" C_RESET);
+    printf(
+        C_DIM
+        " (smart view — pomos grouped, focus on signal. Add --full for raw.)\n" C_RESET
+    );
 
     /* High priority: pending todos always front-and-center */
-    printf("\n" C_BOLD C_YELLOW "📋 Pending Priorities" C_RESET " — tackle these first\n");
-    list_active_tasks(todo_path, 7);
+    printf("\n" C_BOLD C_YELLOW "📋 Pending Priorities" C_RESET
+           " — tackle these first\n");
+    {
+        const int max_to_show = REVIEW_TASK_LIST_MAX_TO_SHOW;
+        list_active_tasks(todo_path, max_to_show);
+    }
 
     /* Read log, categorize, suppress low-value POMO spam by default */
     FILE *f = fopen(log_path, "r");
@@ -134,11 +144,16 @@ void show_review(
         int start = (nwin > 5 ? nwin - 5 : 0);
         for (int i = start; i < nwin; i++) {
             char *content = strstr(hl_wins[i], "[WIN]");
-            if (content) content += 5;
-            else content = hl_wins[i];
+            if (content) {
+                content += 5;
+            } else {
+                content = hl_wins[i];
+            }
             /* strip leading ts if present */
             char *tsend = strstr(content, "] ");
-            if (tsend) content = tsend + 2;
+            if (tsend) {
+                content = tsend + 2;
+            }
             printf("   ✨ %s", content);
         }
     }
@@ -148,10 +163,15 @@ void show_review(
         int start = (nnote > 5 ? nnote - 5 : 0);
         for (int i = start; i < nnote; i++) {
             char *content = strstr(hl_notes[i], "[NOTE]");
-            if (content) content += 6;
-            else content = hl_notes[i];
+            if (content) {
+                content += 6;
+            } else {
+                content = hl_notes[i];
+            }
             char *tsend = strstr(content, "] ");
-            if (tsend) content = tsend + 2;
+            if (tsend) {
+                content = tsend + 2;
+            }
             printf("   📝 %s", content);
         }
     }
@@ -161,15 +181,20 @@ void show_review(
         int start = (ndone > 5 ? ndone - 5 : 0);
         for (int i = start; i < ndone; i++) {
             char *content = strstr(hl_dones[i], "[DONE]");
-            if (content) content += 6;
-            else content = hl_dones[i];
+            if (content) {
+                content += 6;
+            } else {
+                content = hl_dones[i];
+            }
             /* clean old embedded prefixes from task completion logs */
             char *emb = strstr(content, "[TODO]");
             if (emb) {
                 content = emb + 6;
             }
             char *tsend = strstr(content, "] ");
-            if (tsend && tsend < content + 30) content = tsend + 2; /* avoid eating real text */
+            if (tsend && tsend < content + 30) {
+                content = tsend + 2; /* avoid eating real text */
+            }
             content = ltrim(content);
             printf("   ✔️  %s", content);
         }
@@ -177,10 +202,15 @@ void show_review(
 
     /* Always surface the volume of focus work, but de-emphasized */
     if (npomo > 0) {
-        printf("\n" C_DIM "🍅 %d pomodoro sessions (focus work logged — hidden by default)\n" C_RESET, npomo);
+        printf(
+            "\n" C_DIM
+            "🍅 %d pomodoro sessions (focus work logged — hidden by default)\n" C_RESET,
+            npomo
+        );
     }
 
-    puts("\n" C_DIM "Use: premflow review --full   for complete history + every entry" C_RESET);
+    puts("\n" C_DIM
+         "Use: premflow review --full   for complete history + every entry" C_RESET);
     puts(C_DIM "     premflow task list          for full pending list" C_RESET);
 }
 
@@ -193,10 +223,14 @@ void show_search(
 
     char *log_tmp = data_path(LOG_FILE);
     char log_path[512] = {0};
-    if (log_tmp) snprintf(log_path, sizeof(log_path), "%s", log_tmp);
+    if (log_tmp) {
+        snprintf(log_path, sizeof(log_path), "%s", log_tmp);
+    }
     char *todo_tmp = data_path(TODO_FILE);
     char todo_path[512] = {0};
-    if (todo_tmp) snprintf(todo_path, sizeof(todo_path), "%s", todo_tmp);
+    if (todo_tmp) {
+        snprintf(todo_path, sizeof(todo_path), "%s", todo_tmp);
+    }
     if (!log_path[0] || !todo_path[0]) {
         return;
     }

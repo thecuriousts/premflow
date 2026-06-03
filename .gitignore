@@ -23,6 +23,11 @@
 !images/
 !images/**
 
+# Cursor agent rules (must un-ignore parent dirs for git to descend)
+!.cursor/
+!.cursor/rules/
+!.cursor/rules/**
+
 # GitHub Actions (must un-ignore parent dirs for git to descend)
 !.github/
 !.github/workflows/

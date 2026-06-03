@@ -298,7 +298,7 @@ void list_active_tasks(
     printf("📋 === Active Tasks ===\n");
     while (fgets(line, sizeof(line), f)) {
         ++count;
-        if (max_to_show <= 0 || shown < max_to_show) {
+        if (max_to_show <= DEFAULT_TASK_LIST_MAX_TO_SHOW || shown < max_to_show) {
             printf("%3d. %s", count, line);
             ++shown;
         }
@@ -308,7 +308,9 @@ void list_active_tasks(
     if (count == 0) {
         printf("No tasks — you're crushing it!\n");
     } else if (max_to_show > 0 && count > max_to_show) {
-        printf("    ... and %d more (use 'premflow task list' or 'review --full' to see all)\n", count - max_to_show);
+        printf("    ... and %d more (use 'premflow task list' or 'review --full' to "
+               "see all)\n",
+               count - max_to_show);
     }
 }
 
@@ -375,8 +377,12 @@ bool complete_task(
     } else {
         /* skip [ts] [TYPE] prefix: locate second ']' */
         char *p = strchr(clean, ']');
-        if (p) p = strchr(p + 1, ']');
-        if (p) clean = p + 1;
+        if (p) {
+            p = strchr(p + 1, ']');
+        }
+        if (p) {
+            clean = p + 1;
+        }
     }
     clean = trim(clean);
 
