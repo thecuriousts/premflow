@@ -84,35 +84,36 @@ Add:
 
 ```mermaid
 flowchart TB
-    subgraph CLI["premflow (36KB C binary, zero LLM deps)"]
-        Main[main.c: parse_argv + elomaxz_run_batch]
-        App[app.c: pf_update / pf_view / PremflowModel{review_ai, review_full}]
-        UI[ui.c: show_review / show_stats / show_search]
-        Core[core.c: append_entry:182, list_active_tasks:280, data_path:48 (static), complete_task:370]
-        FX[effects.c: pf_handle_cmd → EFFECT_*]
+    subgraph cli["premflow — 36KB C binary, zero LLM deps"]
+        Main["main.c — parse_argv, elomaxz_run_batch"]
+        App["app.c — pf_update, pf_view, PremflowModel flags"]
+        UI["ui.c — show_review, show_stats, show_search"]
+        Core["core.c — append_entry, list_active_tasks, data_path"]
+        FX["effects.c — pf_handle_cmd, EFFECT_*"]
     end
 
-    subgraph Data["Plain-text source of truth (never mutated by AI)"]
-        Log[~/.premflow/log.txt]
-        Todo[todo.txt]
-        Jrn[journal/journal-*.txt]
-        Cfg[config.txt (add: AI_MODEL=...)]
+    subgraph data["Plain-text source of truth — never mutated by AI"]
+        Log["HOME/.premflow/log.txt"]
+        Todo["todo.txt"]
+        Jrn["journal/journal-YYYY-MM-DD.txt"]
+        Cfg["config.txt — AI_MODEL optional"]
+    end
+
+    subgraph ai_opt["Optional external — zero core bloat"]
+        Helper["premflow-ai helper — reads log, todo, journal"]
+        Direct["C popen or ollama-run — guarded"]
+        Ollama["ollama localhost:11434 — qwen2.5:7b, nomic-embed"]
     end
 
     Main --> App
-    App -->|no effect for review| UI
-    UI -->|reads + copies path| Core
-    UI --> Data
-    FX --> Data
-
-    subgraph AI_Optional["Optional / External (zero core bloat)"]
-        Helper["premflow-ai (python/go/C helper or script)\nreads log/todo/jrn\ncalls ollama /api/generate\n--model qwen2.5:7b"]
-        Direct["C popen/curl/ollama-run (guarded)"]
-        Ollama["ollama serve (localhost:11434)\nqwen2.5:7b + nomic-embed-text"]
-    end
-
-    UI -. "if (model.review_ai) { popen or exec helper }" .-> Direct
-    UI -. "prefer if in $PATH" .-> Helper
+    App -->|"review: no write effect"| UI
+    UI -->|"reads paths via Core"| Core
+    UI --> Log
+    UI --> Todo
+    FX --> Log
+    FX --> Todo
+    UI -.->|"review --ai"| Direct
+    UI -.->|"prefer if in PATH"| Helper
     Helper --> Ollama
     Direct --> Ollama
 ```
@@ -122,22 +123,21 @@ Sequence for `review --ai`:
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant P as premflow (C)
-    participant A as app.c pf_update
-    participant V as ui.c show_review(ai=1)
-    participant H as helper or ollama (external)
-    participant D as ~/.premflow/*
+    participant P as premflow
+    participant A as app pf_update
+    participant V as ui show_review
+    participant H as premflow-ai or ollama
+    participant D as premflow data dir
 
     U->>P: premflow review --ai
-    P->>A: PF_MSG_REVIEW (review_ai=1)
-    A->>V: view(model)
-    V->>D: read recent (copy data_path buffers)
-    V->>V: build curated C view (as today) + context blob (last 7d wins/notes + todos + journal + opt hist)
-    V->>H: popen("premflow-ai summarize --context /tmp/ctx-$$.txt --model $(config AI_MODEL)") or curl -d @payload.json :11434/api/generate
-    H->>Ollama: POST /api/generate {model, prompt: "You are a reflection coach. From this activity...\n\n[ctx]\n\nProduce: 1. 3-bullet 'What got done'...\n2. Focus score...\n3. 2 Socratic questions..."}
-    Ollama-->>H: { "response": "• Shipped X\n• ...", "done":true, ... }
-    H-->>V: stdout summary text
-    V->>U: print "🤖 AI Summary (qwen2.5:7b, 4.3s)\n[summary]\n\n" + C smart sections + "Use --no-ai for pure"
+    P->>A: PF_MSG_REVIEW review_ai=1
+    A->>V: view model
+    V->>D: read log, todo, journal copies
+    V->>V: curated C view plus context blob
+    V->>H: summarize via helper or API
+    H->>H: POST ollama api generate
+    H-->>V: summary text on stdout
+    V->>U: AI summary plus smart C sections
 ```
 
 ### Short/Medium Term Polish (Pure C)
