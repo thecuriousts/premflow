@@ -1,0 +1,42 @@
+---
+description: No magic literals in C calls; name limits after parameters; use scoped locals at call sites
+globs: "{src,tests}/**/*.{c,h}"
+alwaysApply: false
+---
+
+# C explicit parameters (premflow)
+
+## Constraint
+
+Do not pass unexplained numeric or boolean literals into functions. Name the meaning in a `#define`, `enum`, or `const` local whose name matches the **callee parameter** (not the caller's intent alone).
+
+## Naming
+
+- Constant names describe the **parameter role**: `DEFAULT_TASK_LIST_MAX_TO_SHOW`, `REVIEW_TASK_LIST_MAX_TO_SHOW`.
+- Avoid names that sound like behavior when the value is a sentinel: prefer `DEFAULT_*` / `*_MAX_TO_SHOW` over `SHOW_ALL`, `UNLIMITED`, or `NO_LIMIT` unless the API is literally boolean.
+- Document sentinel semantics once (header comment): e.g. `max_to_show <= 0` means no cap.
+
+## Call sites
+
+Introduce a scoped local when it clarifies the call:
+
+```c
+const int max_to_show = REVIEW_TASK_LIST_MAX_TO_SHOW;
+list_active_tasks(todo_path, max_to_show);
+```
+
+Use a block scope when adding locals inside `switch` arms.
+
+## Where constants live
+
+- Shared limits: public header (`premflow.h`) with a one-line comment.
+- Single-file magic: file-local `#define` at top of `.c`.
+- Do not reuse a constant whose name implies a different parameter semantics.
+
+## Examples in this repo
+
+| Avoid | Prefer |
+|-------|--------|
+| `list_active_tasks(path, 0)` | `DEFAULT_TASK_LIST_MAX_TO_SHOW` + local `max_to_show` |
+| `list_active_tasks(path, 7)` | `REVIEW_TASK_LIST_MAX_TO_SHOW` + local |
+| `if (max_to_show <= 0)` | `<= DEFAULT_TASK_LIST_MAX_TO_SHOW` in `core.c` |

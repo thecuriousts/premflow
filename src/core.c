@@ -274,11 +274,12 @@ void start_pomodoro(
 
     printf("\n✅ Pomodoro complete! Amazing focus, Prem! 🎉\n");
     play_sound(sounds.pomo_complete);
-    append_entry(data_path(LOG_FILE), "[POMO]", "Focused work session");
+    append_entry(data_path(LOG_FILE), "[POMO]", "pomodoro session");
 }
 
 void list_active_tasks(
-    const char *filepath
+    const char *filepath,
+    int max_to_show
 ) {
     if (!filepath) {
         printf("Error: No filepath provided\n");
@@ -293,14 +294,23 @@ void list_active_tasks(
 
     char line[MAX_LINE];
     int count = 0;
+    int shown = 0;
     printf("📋 === Active Tasks ===\n");
     while (fgets(line, sizeof(line), f)) {
-        printf("%3d. %s", ++count, line);
+        ++count;
+        if (max_to_show <= DEFAULT_TASK_LIST_MAX_TO_SHOW || shown < max_to_show) {
+            printf("%3d. %s", count, line);
+            ++shown;
+        }
     }
     fclose(f);
 
     if (count == 0) {
         printf("No tasks — you're crushing it!\n");
+    } else if (max_to_show > 0 && count > max_to_show) {
+        printf("    ... and %d more (use 'premflow task list' or 'review --full' to "
+               "see all)\n",
+               count - max_to_show);
     }
 }
 
@@ -360,8 +370,19 @@ bool complete_task(
     fclose(tmp);
 
     char *clean = trim(task_buf);
-    if (strncmp(clean, "[TODO]", 6) == 0) {
-        clean += 6;
+    /* robust strip of leading timestamp + [TODO] prefix from stored todo line */
+    char *todo_tag = strstr(clean, "[TODO]");
+    if (todo_tag) {
+        clean = todo_tag + 6;
+    } else {
+        /* skip [ts] [TYPE] prefix: locate second ']' */
+        char *p = strchr(clean, ']');
+        if (p) {
+            p = strchr(p + 1, ']');
+        }
+        if (p) {
+            clean = p + 1;
+        }
     }
     clean = trim(clean);
 

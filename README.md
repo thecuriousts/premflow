@@ -3,7 +3,7 @@
 ![premflow](images/project-intro-picture-grok-image.png)
 
 **Tiny. Clean. Powerful.**  
-A minimalist productivity CLI tool written in pure C — zero bloat, maximum daily time saved.
+A minimalist productivity CLI in pure C — fewer flags, less noise, more signal in your daily log.
 
 ### Why you need to use premflow
 
@@ -19,11 +19,11 @@ A minimalist productivity CLI tool written in pure C — zero bloat, maximum dai
 
 ### Features
 
-
 - 📝 Quick notes & wins logging
 - ✅ Task management (add, list, complete)
+- 📅 **Smart daily review** — pending todos and recent wins/notes/dones first; pomodoros summarized, not spammed
 - 🍅 Pomodoro timer with sound notifications
-- 📖 Daily journal with beautiful template
+- 📖 Daily journal with template
 - 🔍 Search across logs & tasks
 - 📊 Personal stats dashboard
 - ⚙️ Customizable sounds via config
@@ -63,40 +63,57 @@ make install   # installs to ~/.local/bin (default)
 
 The [Makefile](/Makefile) wraps CMake and sets `PREFIX ?= $(HOME)/.local` by default.
 
+### Simplicity by default
+
+Recent work on this branch doubles down on **less ceremony, clearer output**:
+
+| Habit | Why |
+|-------|-----|
+| `premflow` with no args | Help — **no** `--help` / `-h` to parse or remember |
+| `premflow review` | Curated end-of-day view: priorities, wins, notes, dones; POMO sessions counted, not listed line-by-line |
+| `premflow review --full` | Raw log tail + full task list only when you need everything |
+| `premflow task list` | Full todo file, always |
+| Plain text under `~/.premflow/` | No database, no sync service — grep-friendly logs |
+
+Defaults should answer “what matters today?” Opt in to noise (`review --full`) instead of wading through it every evening.
+
 ### Usage
 
-#### Basic Commands
+#### Basic commands
 
 ```bash
-premflow                    # Show help
-premflow note "Great idea!" # Log a quick note
+premflow                         # Help — type this, not --help
+premflow note "Great idea!"
 premflow win "Nailed the demo"
 premflow task add "Buy milk"
-premflow task list
+premflow task list               # All active tasks
 premflow task done 2
-premflow pomo 25            # Start 25-min pomodoro
-premflow journal            # Open today's journal (creates template if new)
-premflow stats              # Show lifetime stats
-premflow review             # Daily review (recent wins + tasks)
-premflow search "meeting"   # Search logs & tasks
-premflow edit todo          # Edit tasks in $EDITOR (default: nano)
-premflow config sound       # Customize sound notifications
+premflow pomo 25
+premflow journal
+premflow stats
+premflow review                  # Smart review (recommended)
+premflow review --full           # Raw dump when debugging or auditing
+premflow search "meeting"
+premflow edit todo
+premflow config sound
 ```
 
-#### Example Daily Workflow
+`premflow --help` is intentionally unsupported (unknown command). Muscle memory: bare binary for help, subcommand for work.
+
+#### Example daily workflow
 
 ```bash
-# Morning
+# Morning — plan
 premflow journal
 premflow task add "Finish project proposal"
-premflow task add "Review pull requests"
 
-# Deep work
+# Focus
 premflow pomo 50
 
-# End of day
+# Evening — signal, not spam
 premflow win "Shipped v2.0"
-premflow review
+premflow review                  # Quick curated recap
+# premflow review --full         # Uncomment only when you need the raw log
 ```
 
 ### Configuration
@@ -163,28 +180,17 @@ All tests use `mkstemp()` for safe, isolated file I/O testing.
 
 ### Philosophy
 
-- One small binary
-- [elomaxz](https://github.com/p10ns11y/elomaxz) MVU core (functional update + imperative effects) + standard C + common Unix tools
-- Built for speed and daily personal use
-- Clean separation: update/view (app) vs effects (I/O) vs display helpers (ui)
-- Proper error handling and exit codes
+- **Small surface area** — one binary, one shot per shell invocation, no REPL
+- **Smart defaults** — help without flags; review that highlights signal; `--full` only when you ask
+- **Plain data** — `log.txt`, `todo.txt`, `config.txt` under `~/.premflow/`
+- **Honest Unix CLI** — [elomaxz](https://github.com/p10ns11y/elomaxz) MVU (`run_batch`): parse → update → effects → view, then exit
+- **Readable C** — named limits instead of magic call literals; UI separate from file logic
 
-### Architecture (MVU + `elomaxz_run_batch`)
+Design notes and v2 direction: **[designs/](designs/)** (start with [architecture_v1.md](designs/architecture_v1.md)).
 
-premflow is a **one-shot CLI**: each run is one shell command, one exit code. elomaxz exposes six public functions; premflow uses **`elomaxz_run_batch`** as the entry runner and **`elomaxz_make_cmd`** inside `update` (effects run via **`elomaxz_execute_cmds`** → `handle_cmd`).
+### Architecture (short)
 
-| Function | premflow |
-|----------|----------|
-| `elomaxz_run_batch` | **Yes** — one `PremflowMsg` from `argv` (`count == 1`) |
-| `elomaxz_make_cmd` | **Yes** — `CMD_CUSTOM` + `EffectPayload` in `app.c` |
-| `elomaxz_execute_cmds` | Indirect — called by `run_batch`; `pf_handle_cmd` in `effects.c` |
-| `elomaxz_run_with_msg_source` | No — REPL / stdin loop (counter demo pattern) |
-| `elomaxz_run_cli` | No — demo stub only |
-| `elomaxz_print_prompt` | No — no in-app REPL prompt |
-
-Flow: `parse_argv` → `elomaxz_run_batch` → `update` + `make_cmd` → `execute_cmds` → `view`. argv-driven, not a stdin REPL.
-
-Full rationale, **elomaxz API reference** (`run_cli`, `run_with_msg_source`, `run_batch`, `execute_cmds`, `make_cmd`, `print_prompt`), diagrams, and trade-offs: **[docs/architecture.md](docs/architecture.md)**.
+Each command is a fresh process: `parse_argv` → `elomaxz_run_batch` (one message) → `update` / effects / `view`. No interactive runner, no `--help` parser — fewer code paths, faster habit loop. Details, diagrams, and runner comparison: **[designs/architecture_v1.md](designs/architecture_v1.md)**.
 
 
 ### Project Structure
@@ -200,8 +206,8 @@ premflow/
 │   └── ui.c        # Display / output functions
 ├── tests/
 │   └── test.c      # Comprehensive test suite
-├── docs/
-│   └── architecture.md  # Why elomaxz_run_batch, runner comparison
+├── designs/            # Architecture + v2 ideas (plain markdown)
+│   └── architecture_v1.md
 ├── CMakeLists.txt  # FetchContent(elomaxz) + targets
 ├── Makefile        # Thin CMake wrapper
 └── README.md

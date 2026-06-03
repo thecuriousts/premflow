@@ -39,7 +39,8 @@ COMMANDS
      stats  Show lifetime productivity statistics.
 
      review
-            Show daily review (recent entries + active tasks).
+            Show daily review (curated highlights + high-priority pending todos).
+            Use "review --full" or "review full" for raw unfiltered log dump.
 
      config sound
             Edit sound notification configuration.

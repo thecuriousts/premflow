@@ -1,0 +1,17 @@
+---
+description: Use CreatePlan or Task before large cross-repo refactors
+globs: "**/*.{c,h,cmake,txt}"
+alwaysApply: false
+---
+
+# Plan before large refactor
+
+premflow gold sessions start large work with **Task → Read → Glob → CreatePlan → TodoWrite**, not immediate rewrites.
+
+When the user attaches an implementation plan or references another repo (e.g. elomaxz MVU patterns):
+
+1. **Read** the plan and current CMake/model entry points.
+2. **CreatePlan** or TodoWrite checklist if the diff will touch more than 3 files.
+3. Implement **one checklist item** per user "proceed" — build after each chunk.
+
+Do not copy another repo’s files wholesale without reading premflow’s existing structure first.

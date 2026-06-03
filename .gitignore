@@ -16,12 +16,29 @@
 !*.png
 
 
+!designs/
+!designs/**
 !docs/
 !docs/**
 !images/
 !images/**
 
+# Cursor agent rules and skills (canonical; .agents/ symlinks here)
+!.cursor/
+!.cursor/rules/
+!.cursor/rules/**
+!.cursor/skills/
+!.cursor/skills/**
+
+# .agents/ entry points (symlinks to .cursor/)
+!.agents/
+!.agents/rules
+!.agents/skills
+
 # GitHub Actions (must un-ignore parent dirs for git to descend)
 !.github/
 !.github/workflows/
 !.github/workflows/**
+
+# AI / stellarfusion state (never commit - contains fused project knowledge)
+.stellarfusion/

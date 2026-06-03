@@ -10,6 +10,10 @@
 #define TODO_FILE "todo.txt"
 #define CONFIG_FILE "config.txt"
 
+/* list_active_tasks(filepath, max_to_show): <=0 applies no listing cap */
+#define DEFAULT_TASK_LIST_MAX_TO_SHOW 0
+#define REVIEW_TASK_LIST_MAX_TO_SHOW 8
+
 typedef struct {
     char player[256];
     char pomo_start[512];
@@ -39,13 +43,13 @@ void play_sound(const char *command);
 void open_editor(const char *filepath);
 
 void start_pomodoro(int minutes);
-void list_active_tasks(const char *filepath);
+void list_active_tasks(const char *filepath, int max_to_show);
 bool complete_task(const char *filepath, int task_num);
 
 // UI
 void show_help(void);
 void show_stats(void);
-void show_review(void);
+void show_review(int full);
 void show_search(const char *term);
 
 #endif
