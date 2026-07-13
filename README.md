@@ -140,6 +140,30 @@ Empty value = disable that sound.
 
 ---
 
+### Cross-refs (life-os · ensembly · shared data)
+
+premflow is the **micro-capture CLI**. Notes/tasks/journal/pomo live in **`~/.premflow/`** (byte SoT). Other tools **view the same tree** — they do not own a second todo list.
+
+| Peer | Path / link | Role |
+|------|-------------|------|
+| **Data (SoT)** | `~/.premflow/` | `todo.txt`, `log.txt`, `journal/`, `config.txt` — local only; may hold finance/PII |
+| **life-os portfolio card** | `~/life-os/Projects/premflow/README.md` | Product card (status, energy, sessions) — not a parallel inbox |
+| **life-os vault view** | `~/life-os/Projects/premflow/capture` → `~/.premflow` | Symlink (gitignored); same files in Obsidian |
+| **ensembly integration law** | `~/Work/personal/ensembly/docs/PREMFLOW-FIT.md` | One filesystem SoT, wrapper, privacy (redacted insights for share) |
+| **ensembly CLI wrapper** | `node bin/swarm.js flow …` (repo: ensembly) | Invent/list/review via this binary + same `HOME/.premflow` |
+| **Day next-act / HITL** | ensembly `turn` / claim / approve | **Not** premflow — do not dump gates into `todo.txt` |
+
+```bash
+# From ensembly: ensure vault capture link + call premflow
+cd ~/Work/personal/ensembly
+npm run flow:link
+node bin/swarm.js flow task list   # == premflow task list (same files)
+```
+
+**Privacy:** treat `~/.premflow` as private. Shareable digests must use ensembly redaction (`projectCaptureForShare` / `flow path --json`), not raw todo dumps.
+
+---
+
 ### Useful Make Targets
 
 ```bash
