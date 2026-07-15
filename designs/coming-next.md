@@ -381,9 +381,9 @@ flowchart TB
 
 ---
 
-### SN-4 · Grok life-flow plugin (premflow as tools)
+### SN-4 · Grok `premflow` skill (CLI as tools)
 
-**Problem:** Coding agents can edit the repo, but Grok does not yet have a first-class **daily-flow** package that runs premflow and coaches from the ledger — so “AI for my day” defaults to weak local models or ad-hoc chat.
+**Problem:** Coding agents can edit the repo, but daily capture needs a first-class **premflow** skill that runs the CLI and coaches from the ledger — so “AI for my day” does not fall back to weak local models or ad-hoc chat.
 
 ```mermaid
 sequenceDiagram
