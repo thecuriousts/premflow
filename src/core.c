@@ -182,12 +182,142 @@ bool ensure_dirs(
     return true;
 }
 
+bool ledger_sanitize_body(
+    const char *in,
+    char *out,
+    size_t out_sz
+) {
+    if (!out || out_sz == 0) {
+        return false;
+    }
+    out[0] = '\0';
+    if (!in) {
+        return false;
+    }
+
+    size_t j = 0;
+    int prev_space = 1; /* trim leading space */
+    for (const char *p = in; *p && j + 1 < out_sz; p++) {
+        unsigned char c = (unsigned char) *p;
+        if (c == '\n' || c == '\r' || c == '\t') {
+            c = ' ';
+        }
+        if (c == ' ') {
+            if (prev_space) {
+                continue;
+            }
+            prev_space = 1;
+            out[j++] = ' ';
+            continue;
+        }
+        if (c < 32) {
+            continue; /* drop other controls */
+        }
+        prev_space = 0;
+        out[j++] = (char) c;
+    }
+    /* trim trailing space */
+    while (j > 0 && out[j - 1] == ' ') {
+        j--;
+    }
+    out[j] = '\0';
+    return j > 0;
+}
+
+void ledger_clean_done_body(
+    const char *task_line,
+    char *out,
+    size_t out_sz
+) {
+    if (!out || out_sz == 0) {
+        return;
+    }
+    out[0] = '\0';
+    if (!task_line) {
+        return;
+    }
+
+    char buf[MAX_LINE];
+    snprintf(buf, sizeof(buf), "%s", task_line);
+    char *clean = trim(buf);
+
+    /* Prefer last [TODO] body (handles nested historical shapes) */
+    char *todo_tag = NULL;
+    for (char *p = clean; (p = strstr(p, "[TODO]")) != NULL; p += 6) {
+        todo_tag = p;
+    }
+    if (todo_tag) {
+        clean = trim(todo_tag + 6);
+    } else {
+        /* strip [ts] [TYPE] if present: after second ']' */
+        char *p = strchr(clean, ']');
+        if (p) {
+            p = strchr(p + 1, ']');
+        }
+        if (p) {
+            clean = trim(p + 1);
+        }
+    }
+
+    /* Drop accidental leading type tags left in body */
+    while (clean[0] == '[') {
+        char *end = strchr(clean, ']');
+        if (!end) {
+            break;
+        }
+        clean = trim(end + 1);
+    }
+
+    ledger_sanitize_body(clean, out, out_sz);
+}
+
+bool ledger_line_matches_contract(
+    const char *line
+) {
+    if (!line || line[0] != '[') {
+        return false;
+    }
+    /* [YYYY-MM-DD HH:MM] */
+    if (strlen(line) < 19) {
+        return false;
+    }
+    if (line[5] != '-' || line[8] != '-' || line[11] != ' ' || line[14] != ':' ||
+        line[17] != ']') {
+        return false;
+    }
+    for (int i = 1; i <= 4; i++) {
+        if (line[i] < '0' || line[i] > '9') {
+            return false;
+        }
+    }
+    if (line[18] != ' ' || line[19] != '[') {
+        return false;
+    }
+    const char *type = line + 20;
+    if (*type < 'A' || *type > 'Z') {
+        return false;
+    }
+    while (*type >= 'A' && *type <= 'Z') {
+        type++;
+    }
+    if (*type != ']' || type[1] != ' ' || type[2] == '\0' || type[2] == '\n') {
+        return false;
+    }
+    return true;
+}
+
 bool append_entry(
     const char *filepath,
     const char *prefix,
     const char *text
 ) {
     if (!filepath || !prefix || !text) {
+        return false;
+    }
+
+    char body[MAX_LINE];
+    if (!ledger_sanitize_body(text, body, sizeof(body))) {
+        fprintf(stderr, "Error: Empty ledger body after sanitize\n");
         return false;
     }
 
@@ -202,7 +332,7 @@ bool append_entry(
     char ts[64];
     strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M", tm);
 
-    if (fprintf(f, "[%s] %s %s\n", ts, prefix, text) < 0) {
+    if (fprintf(f, "[%s] %s %s\n", ts, prefix, body) < 0) {
         fclose(f);
         return false;
     }
@@ -778,24 +908,13 @@ bool complete_task(
     fclose(f);
     fclose(tmp);
 
-    char *clean = trim(task_buf);
-    /* robust strip of leading timestamp + [TODO] prefix from stored todo line */
-    char *todo_tag = strstr(clean, "[TODO]");
-    if (todo_tag) {
-        clean = todo_tag + 6;
-    } else {
-        /* skip [ts] [TYPE] prefix: locate second ']' */
-        char *p = strchr(clean, ']');
-        if (p) {
-            p = strchr(p + 1, ']');
-        }
-        if (p) {
-            clean = p + 1;
-        }
+    char done_body[MAX_LINE];
+    ledger_clean_done_body(task_buf, done_body, sizeof(done_body));
+    if (!done_body[0]) {
+        snprintf(done_body, sizeof(done_body), "task %d", task_num);
     }
-    clean = trim(clean);
 
-    append_entry(data_path(LOG_FILE), "[DONE]", clean);
+    append_entry(data_path(LOG_FILE), "[DONE]", done_body);
     play_sound(sounds.task_complete);
     printf("✅ Task #%d completed!\n", task_num);
     return true;

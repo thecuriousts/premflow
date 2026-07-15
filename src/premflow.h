@@ -2,6 +2,7 @@
 #define PREMFLOW_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #define MAX_LINE 1024
@@ -38,6 +39,17 @@ void read_config(void);
 
 // Core logic (return bool for success/failure)
 bool ensure_dirs(void);
+
+/* Collapse CR/LF/TAB to spaces, trim, single-line body for ledger clarity.
+ * Returns false if result would be empty. Always null-terminates out when out_sz>0. */
+bool ledger_sanitize_body(const char *in, char *out, size_t out_sz);
+
+/* Strip leading [ts] and [TODO]/[TYPE] tags from a todo line for DONE body. */
+void ledger_clean_done_body(const char *task_line, char *out, size_t out_sz);
+
+/* True if line matches [YYYY-MM-DD HH:MM] [TYPE] non-empty body (TYPE = A-Z+). */
+bool ledger_line_matches_contract(const char *line);
+
 bool append_entry(const char *filepath, const char *prefix, const char *text);
 void play_sound(const char *command);
 void open_editor(const char *filepath);

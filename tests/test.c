@@ -69,8 +69,48 @@ bool test_append_and_read(
 
     assert(strstr(line, "[TEST]") != NULL);
     assert(strstr(line, "Hello from test") != NULL);
+    assert(ledger_line_matches_contract(line) == true);
+
+    /* Multi-line dump becomes single line */
+    ok = append_entry(tmpfile, "[NOTE]", "line one\nline two\r\n  spaced  ");
+    assert(ok == true);
+    f = fopen(tmpfile, "r");
+    assert(f != NULL);
+    fgets(line, sizeof(line), f); /* skip first */
+    fgets(line, sizeof(line), f);
+    fclose(f);
+    assert(strstr(line, "\nline") == NULL);
+    assert(strstr(line, "line one line two spaced") != NULL);
+    assert(ledger_line_matches_contract(line) == true);
 
     unlink(tmpfile); // cleanup
+    return true;
+}
+
+bool test_ledger_contract_helpers(
+    void
+) {
+    char body[MAX_LINE];
+    char done[MAX_LINE];
+
+    assert(ledger_sanitize_body("  hello\nworld\t ", body, sizeof(body)) == true);
+    assert(strcmp(body, "hello world") == 0);
+    assert(ledger_sanitize_body("   \n\t", body, sizeof(body)) == false);
+
+    /* Nested historical TODO shape → plain title */
+    ledger_clean_done_body("[2026-04-11 23:18] [TODO] Test task to complete\n", done,
+                           sizeof(done));
+    assert(strcmp(done, "Test task to complete") == 0);
+
+    ledger_clean_done_body("[2026-04-11 23:18] [DONE] [2026-04-11 23:18] [TODO] Nested",
+                           done, sizeof(done));
+    assert(strcmp(done, "Nested") == 0);
+
+    assert(ledger_line_matches_contract(
+               "[2026-07-15 12:00] [NOTE] ship it\n") == true);
+    assert(ledger_line_matches_contract("not a ledger line") == false);
+    assert(ledger_line_matches_contract("[2026-07-15 12:00] [NOTE]\n") == false);
+
     return true;
 }
 
@@ -426,6 +466,7 @@ int main(
     TEST(test_trim);
     TEST(test_data_path);
     TEST(test_append_and_read);
+    TEST(test_ledger_contract_helpers);
     TEST(test_complete_task);
     TEST(test_config_template);
     TEST(test_journal_path);
