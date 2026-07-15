@@ -1,19 +1,19 @@
 # premflow — coming next (stellar roadmap)
 
-**Ship computer for a human day:** capture signal, protect focus, project the ledger, optionally ask a local coach — never bloat the hull.
+**Ship computer for a human day:** capture signal, protect focus, project the ledger — and let **Grok Build drive premflow** (skills/plugin) when you want a strong coach, without stuffing a model into the C binary.
 
 ---
 
 ## §0 · Mission
 
-Keep premflow a **tiny pure-C one-shot CLI** over human-editable plain text, while the daily loop (capture → focus → review → journal) becomes sharper, more steerable, and **optionally** LLM-augmented outside the core binary.
+Keep premflow a **tiny pure-C one-shot CLI** over human-editable plain text, while the daily loop (capture → focus → review → journal) stays sharp in C and can be **orchestrated and coached by Grok Build** via a skill/plugin that runs and reads premflow — preferred over slow, low-quality local LLMs in the product path.
 
 ---
 
 ## §0b · Ten-year thrive picture (2036)
 
 **Iron-peak fused abstraction:**  
-**Personal Activity Ledger Reactor** = append-only event stream (`log.txt`) + open work set (`todo.txt`) + day lens (journal) + **smart projection** (`review` / stats / search) + **optional external AI bridge** (never inside `premflow` ELF).
+**Personal Activity Ledger Reactor** = append-only event stream (`log.txt`) + open work set (`todo.txt`) + day lens (journal) + **smart projection** (`review` / stats / search) + **Grok as the high-quality AI bridge** that *uses* premflow as tools (CLI + plain files), not a second database.
 
 Trace today:
 
@@ -24,6 +24,7 @@ Trace today:
 | Smart projection | `src/ui.c` (`show_review`, `show_stats`, `show_search`) |
 | Focus engine | `src/core.c` (`pomo_plan_parse`, `pomo_session_*`, `start_pomodoro`) |
 | Design memory | `designs/v2/premflow_v2.0.md`, `designs/architecture_v1.md`, `.stellarfusion/state.json` |
+| Agent surface | `.agents/skills/*`, this doc §15 |
 
 ```mermaid
 flowchart TB
@@ -38,9 +39,9 @@ flowchart TB
     todoF["todo.txt"]
     jrnF["journal/…"]
   end
-  subgraph bridge2036 ["Bridge — optional outside binary"]
-    helper[premflow-ai or ollama popen]
-    coach[review coach / summarize]
+  subgraph bridge2036 ["Bridge — Grok Build preferred"]
+    grok[Grok skill or plugin]
+    coach[coach summarize plan]
   end
   ledgerW --> logF
   ledgerW --> todoF
@@ -48,18 +49,19 @@ flowchart TB
   project --> todoF
   project --> jrnF
   focus --> logF
-  project -.->|"opt-in review --ai"| helper
-  helper --> coach
-  helper --> logF
+  grok -->|"premflow review note task pomo…"| hull2036
+  grok --> logF
+  grok --> coach
 ```
 
 | Layer 2036 | Role | Durable? |
 |------------|------|----------|
 | Kernel | Plain-text ledger + MVU one-shot + pure pomo engine | Decade |
-| Bridge | Projections (review/stats) + verification (`make test`) | Evolves |
-| Edge | Sounds, $EDITOR, external AI helper | Swappable |
+| Bridge | C projections (review/stats) + `make test` | Evolves |
+| AI edge | **Grok Build plugin/skills** that shell premflow + read SoT | Swappable model, same CLI contract |
+| Legacy option | Local ollama helper (v2 draft) | Fallback only if offline-only required |
 
-**Thrive bet confidence:** ~75% that plain-text SoT + external AI remains the winning personal-ops shape vs embedding models in every CLI.
+**Thrive bet confidence:** ~80% that **CLI SoT + strong remote/agent model (Grok)** beats embedding weak local 7B models into every personal tool.
 
 ---
 
@@ -74,8 +76,9 @@ flowchart TB
 | Stats | C | Shell `grep -c` via `system()` | `src/ui.c` (`show_stats`) |
 | Search | C | Shell `grep` via `system()` | `src/ui.c` (`show_search`) |
 | Pure unit tests | B+ | Core paths + pomo engine; no LLM | `tests/test.c`, `CMakeLists.txt` (`test_runner`) |
-| LLM path | D | Designed, not shipped | `designs/v2/premflow_v2.0.md` |
-| Agent steerability | B | Project skills exist; roadmap was missing | `.agents/skills/*`, this file |
+| Local-LLM-in-product path | C | v2 draft; **deprioritized** vs Grok bridge | `designs/v2/premflow_v2.0.md`, §8 |
+| Grok → premflow bridge | C | Skills for *coding* exist; **life-flow plugin** not shipped yet | `.agents/skills/*`, §15 |
+| Agent steerability | B | Project skills + this roadmap | `.agents/skills/*`, this file |
 | data_path hazard | B | Documented; callers must copy | `src/core.c` (`data_path`), `.stellarfusion/state.json` |
 
 ---
@@ -105,7 +108,7 @@ flowchart LR
 | `src/ui.c` | help, stats, review, search presentation |
 | `tests/test.c` | pure core + pomo (no TTY required) |
 
-**Fused insight (fusion-sage):** premflow is not “a todo app with a timer.” It is a **ledger + projection + focus reactor**. Every new feature should either (1) write cleaner ledger events, (2) project the ledger with less noise, or (3) protect focus — AI is a **projection accelerator**, not a second database.
+**Fused insight (fusion-sage):** premflow is not “a todo app with a timer.” It is a **ledger + projection + focus reactor**. Every new feature should either (1) write cleaner ledger events, (2) project the ledger with less noise, or (3) protect focus. **Grok is the preferred projection accelerator** — it *drives* premflow and reads `~/.premflow/`; it is not a second SoT and not a reason to ship ollama inside the ELF.
 
 ---
 
@@ -154,10 +157,11 @@ sequenceDiagram
 
 | Force | P(horizon) | Effect | Response | Confidence |
 |-------|------------|--------|----------|------------|
-| Local LLMs become free utilities | High | Users expect coach/summary | External helper; core stays C | High |
-| Cloud “AI notebooks” absorb capture | Med | Competing for daily log | Win on **offline + grep + 36KB** | Med |
-| Agent coding becomes default | High | Repo must be agent-steerable | Roadmap + skills + dogfood cards | High |
-| Privacy regulation / distrust of cloud | Med-High | Local-only becomes trust feature | Never network from core | High |
+| Strong agent harnesses (Grok Build) | High | Best coach quality lives *outside* tiny CLIs | Ship **premflow plugin/skills** that Grok runs | High |
+| Local 7B “in every tool” disappoints | High | Slow + weak vs frontier models | Prefer Grok path; keep ollama as offline fallback only | High |
+| Cloud “AI notebooks” absorb capture | Med | Competing for daily log | Win on **offline SoT + grep + 36KB** | Med |
+| Agent coding becomes default | High | Repo + life-flow both agent-steerable | Roadmap + skills + dogfood cards | High |
+| Privacy / offline days | Med | Need no-network mode | Pure C review always works; Grok optional | High |
 | Tailwind: plain text + POSIX | High | Tools compose forever | Keep SoT human-editable | High |
 
 ---
@@ -166,14 +170,14 @@ sequenceDiagram
 
 | Refuse (drag) | Build toward 2036 |
 |---------------|-------------------|
-| Embed ollama/llama.cpp in `premflow` | External `premflow-ai` / guarded `popen` |
-| Cloud LLM from core binary | Localhost only; opt-in flags |
-| GUI / Electron / daemon as required path | One-shot CLI remains primary |
+| Embed ollama/llama.cpp in `premflow` | Grok skill/plugin that **calls** premflow + reads SoT |
+| Defaulting life-coach to weak local models | Grok as primary coach quality; local LLM only if offline-hard requirement |
+| GUI / Electron / daemon as required path | One-shot CLI remains primary; Grok orchestrates it |
 | SQLite as required SoT | Plain text forever; optional sidecars only |
 | REPL conversion of entire UX | Stay argv one-shot (`elomaxz_run_batch`) |
-| Auto-mutate journal without user | Draft → editor; user commits |
+| Auto-mutate journal without user confirm | Draft in chat or editor; user commits to files |
 | Agent free-for-all renames without dogfood | SN-1 dogfood gate first |
-| Invented Grok “premflow plugin” as if shipped | Document **control** of Grok; optional project skills |
+| Treating coding skills as the whole story | Also ship **daily-flow** premflow plugin for Grok |
 
 ---
 
@@ -230,66 +234,74 @@ premflow win "landing page copy"
 # Evening
 premflow review
 premflow stats
-# later: premflow review --ai   (SN-4)
+# With Grok plugin (preferred): "evening review" → agent runs premflow + coaches
 ```
 
 ---
 
-## §8 · LLM integration path (optional, offline, zero-core-bloat)
+## §8 · AI integration — Grok drives premflow (preferred); local LLM optional
 
-Fuses and supersedes sequencing from `designs/v2/premflow_v2.0.md` without re-embedding the whole draft.
+**Intent (clarified):** optimize the *daily flow* by letting **Grok Build use and control premflow** as a tool surface (skill and/or installable plugin) — not by bolting a slow local model into the C product. The older ollama-centric draft in `designs/v2/premflow_v2.0.md` remains a useful *offline fallback* design, not the north star.
+
+### Two paths (priority)
+
+| Priority | Path | Quality / speed | When |
+|----------|------|-----------------|------|
+| **P0** | **Grok Build** skill/plugin → runs `premflow …`, reads `~/.premflow/`, coaches in session | Frontier model quality | Default “AI for my day” |
+| **P1** | Pure C `review` / stats / search | Instant, offline | Always available |
+| **P2** | Local helper (`review --ai` / ollama) | Often slower / weaker on laptop | True offline-only machines |
 
 ### Contract
 
 | Rule | Detail |
 |------|--------|
-| SoT | `~/.premflow/*.txt` remains human-editable; AI **reads** only unless user runs edit/journal |
+| SoT | `~/.premflow/*.txt` stays human-editable; Grok **prefers** writing via `premflow note|win|task|…` so the ledger format stays correct |
 | Core binary | No LLM library link; size stays small |
-| Network | No cloud from core; helper uses localhost ollama (or offline llama.cpp) |
-| Opt-in | `review --ai`, `search --semantic`, `journal --ai` — never default |
-| Privacy | No shell history unless explicit config; redaction required if enabled |
-| Failure | Missing ollama → clear message; smart C review still works |
+| Grok plugin | Ships procedures + optional slash commands that *invoke* premflow; does not replace the binary |
+| Local LLM | Opt-in only; never blocks bare `review` |
+| Privacy | User chooses when Grok may read logs; no silent cloud from C core |
+| Failure | No Grok session → CLI still full-featured |
 
-### Architecture
+### Architecture (preferred)
 
 ```mermaid
-flowchart TB
-  subgraph coreBin [premflow ELF]
-    rev[show_review C]
-    flag[review_ai flag]
-  end
-  subgraph external [Outside binary]
-    h[premflow-ai helper]
-    o[ollama localhost]
-  end
-  data["~/.premflow log todo journal"]
-  rev --> data
-  flag -.->|PATH helper| h
-  flag -.->|fallback guarded popen| o
-  h --> data
-  h --> o
+sequenceDiagram
+  participant U as You
+  participant G as GrokBuild
+  participant P as premflow_CLI
+  participant FS as home_premflow
+
+  U->>G: evening review / plan my focus
+  G->>P: premflow review
+  P->>FS: read log todo
+  P-->>G: smart sections stdout
+  G->>FS: optional read journal
+  G-->>U: coach summary questions next pomo plan
+  U->>G: log that win
+  G->>P: premflow win "…"
+  P->>FS: append
 ```
 
-### Surfaces (priority)
+### What Grok should do with premflow (life-flow plugin)
 
-| Surface | Behavior | Depends on |
-|---------|----------|------------|
-| `review --ai` | Smart C sections + draft summary + socratic Qs | Clean C context blob (SN-2/3 help) |
-| `journal --ai` | Fill template sections from summary → open editor | Same helper |
-| `search --semantic` | Embeddings sidecar optional | Index rebuild cmd |
-| Coach / drift | Compare pomos+wins to journal intention | Journal parse |
+| Intent | Grok action | premflow / files |
+|--------|-------------|------------------|
+| Morning orient | Run review + task list; propose top 3 | `premflow review`, `task list` |
+| Start focus | Suggest plan+context; start or remind | `premflow pomo 25 …` or `20,4,…` |
+| Capture | Emit correct CLI, not raw file edits | `note` / `win` / `task add` |
+| Evening coach | Synthesize from review + journal intention | `review`, `stats`, journal files |
+| Drift check | Compare pomos+context labels to intention | log `[POMO]` lines + journal |
+| Code change | Separate: coding skills + SN cards | repo skills, not life-flow |
 
-### Non-goals (LLM)
+### Local LLM (P2) — kept small
 
-- Auto-commit log lines invented by the model  
-- RAG agents that “manage” your day without you  
-- Required GPU / model download for basic CLI  
+If you ever need no-Grok offline AI: external helper + ollama as in v2 — still **outside** the ELF. Do not make it the default story in help text.
 
-### Privacy non-goals (explicit)
+### Non-goals
 
-- Cloud sync of `~/.premflow`  
-- Telemetry of notes  
-- Default inclusion of `$HISTFILE`  
+- Auto-commit invented accomplishments to the log without you  
+- Replacing premflow with a chat-only notebook  
+- Requiring a local GPU for basic CLI  
 
 ---
 
@@ -369,32 +381,36 @@ flowchart TB
 
 ---
 
-### SN-4 · Optional local AI review bridge
+### SN-4 · Grok life-flow plugin (premflow as tools)
 
-**Problem:** Evening reflection still manual synthesis; v2 design exists but unshipped.
+**Problem:** Coding agents can edit the repo, but Grok does not yet have a first-class **daily-flow** package that runs premflow and coaches from the ledger — so “AI for my day” defaults to weak local models or ad-hoc chat.
 
 ```mermaid
 sequenceDiagram
   participant U as User
+  participant G as GrokPlugin
   participant P as premflow
-  participant H as helper_or_ollama
-  U->>P: review --ai
-  P->>P: smart C review
-  P->>H: context blob
-  H-->>P: draft summary
-  P-->>U: C sections plus AI draft
+  U->>G: /premflow-review or evening coach
+  G->>P: premflow review
+  G->>P: premflow stats
+  P-->>G: stdout
+  G-->>U: synthesis next actions
+  U->>G: capture a win
+  G->>P: premflow win "…"
 ```
 
 | File | Work |
 |------|------|
-| `src/app.h` / `app.c` | `review_ai` flag parse |
-| `src/ui.c` | call helper if present |
-| `tools/premflow-ai` or script | external helper (new) |
-| `designs/v2/premflow_v2.0.md` | prompt/contract source |
+| `.grok/skills/premflow-flow/` or plugin dir | SKILL.md: when to run which CLI; never invent log lines |
+| optional `commands/` | `/premflow-review`, `/premflow-focus`, `/premflow-capture` |
+| optional hooks | none required; SessionStart can print `premflow review` tip |
+| `designs/coming-next.md` §8 / §15 | contract for tool use |
 
-**Done when:** Without ollama, smart review still works; with helper, summary appears labeled as draft; core binary has no new link deps.
+**Done when:** From a Grok session you can run a documented flow that (1) invokes real `premflow` commands, (2) reads only `~/.premflow` + CLI output, (3) proposes next pomo/context without writing the log unless you ask for a capture command.
 
-**Verify:** `premflow review`; `premflow review --ai` (skip or soft-fail if no model); size check `ls -la build/premflow`.
+**Verify:** Dogfood script or skill checklist: `premflow review` output appears in agent context; `premflow note "…"` creates a real log line; no ollama required.
+
+**Note:** Local `review --ai` (v2) stays a **later optional** P2 card if offline-hard mode is still wanted after the Grok bridge ships.
 
 ---
 
@@ -453,13 +469,13 @@ gantt
   SN2_stats_search      :a2, after a1, 5d
   SN3_review_polish     :a3, after a1, 5d
   SN5_journal_bridge    :a5, after a3, 3d
-  section AI_opt_in
-  SN4_ai_review         :a4, after a2, 7d
+  section Grok_bridge
+  SN4_life_flow_plugin  :a4, after a1, 7d
   section Agents
   SN6_control_freeze    :a6, after a1, 2d
 ```
 
-**Execute order:** SN-1 → SN-2 ∥ SN-3 → SN-5 → SN-4 → SN-6 (SN-6 can run anytime after SN-1).
+**Execute order:** SN-1 → **SN-4 (Grok life-flow)** can start in parallel with SN-2/3 → SN-5 → SN-6. Pure-C polish still compounds Grok’s inputs (cleaner review stdout).
 
 ---
 
@@ -471,7 +487,7 @@ gantt
 | Binary size | ≲ 100KB stripped goal | Sudden multi-MB jump |
 | `system(` in ui stats/search | 0 after SN-2 | New greps |
 | Review dogfood | Pending first, POMO count only | POMO line spam returns |
-| AI path | Opt-in; fails soft | Network calls from core |
+| Grok life-flow | Uses `premflow` CLI for writes | Direct file invents / skips CLI |
 | Agent entry | This file + SN-1 | Agents invent architecture |
 
 ---
@@ -483,7 +499,7 @@ gantt
 | 2026-06-03 | Phase-1 smart review; fusion state in `.stellarfusion/state.json` |
 | 2026-06-03 | v2 LLM design draft `designs/v2/premflow_v2.0.md` |
 | 2026-07 | Interactive multi-chunk pomo + context (`designs/pomo-interactive.md`) |
-| 2026-07-15 | This stellar roadmap + Grok control section (overhaul contract) |
+| 2026-07-15 | Stellar roadmap; **reframed AI path:** Grok uses premflow (plugin/skills), local LLM deprioritized |
 
 ---
 
@@ -513,76 +529,94 @@ mindmap
 
 ---
 
-## §15 · Grok Build — how to use and control this plugin (and agents)
+## §15 · How Grok Build uses and controls premflow
 
-Grok Build is **not** a premflow C plugin. It is the **coding agent harness** you use to change premflow. Control it with skills, plugins, hooks, and project files.
+**Yes — this is the point:** Grok Build can **drive premflow** (as skills and/or an installable plugin) so the daily loop gets a strong model without local ollama quality/speed pain. Two complementary jobs:
 
-### Skills vs plugins (accurate model)
+| Job | What Grok does | Package |
+|-----|----------------|---------|
+| **A. Life flow** | Run `premflow` for capture/focus/review; coach from stdout + `~/.premflow` | SN-4 life-flow skill/plugin (**build this**) |
+| **B. Code flow** | Change the C repo against SN cards; `make test` | Existing `.agents/skills/*` + this roadmap |
 
-| Concept | What it is | Discovery (priority sketch) |
-|---------|------------|------------------------------|
-| **Skill** | Directory with `SKILL.md` — procedure/prompt package | `.grok/skills`, `.agents/skills`, `~/.grok/skills`, Cursor/Claude compat paths |
-| **Plugin** | Bundle of skills + commands + agents + hooks + MCP/LSP | `.grok/plugins/`, `~/.grok/plugins/`, `grok plugin install`, `/plugins` modal |
-| **Hook** | Lifecycle script/HTTP (SessionStart, PreToolUse, …) | `~/.grok/hooks/`, plugin `hooks/hooks.json` |
-| **Project rules** | `AGENTS.md` / rules — standing constraints | repo root / `.agents/rules` |
+You already control Grok with the usual harness knobs (skills, plugins, hooks). Premflow stays the **fast, offline, correct ledger**; Grok stays the **judgment layer**.
 
-Official guides: Grok user-guide `08-skills.md`, `09-plugins.md`, `10-hooks.md` (on this machine under `~/.grok/docs/user-guide/`).
+### Skills vs plugins (how the harness works)
 
-### Premflow project skills (already in-repo)
+| Concept | What it is | Where Grok looks |
+|---------|------------|------------------|
+| **Skill** | `SKILL.md` procedure package | `.grok/skills`, `.agents/skills`, `~/.grok/skills`, compat dirs |
+| **Plugin** | Bundle: skills + slash commands + agents + hooks + MCP | `.grok/plugins/`, `~/.grok/plugins/`, `grok plugin install`, `/plugins` |
+| **Hook** | Lifecycle script (SessionStart, PreToolUse, …) | `~/.grok/hooks/`, plugin `hooks/hooks.json` |
+| **Project rules** | Standing constraints | `AGENTS.md`, `.agents/rules` |
 
-| Skill | Path | Use when |
-|-------|------|----------|
-| explore-repo-readonly | `.agents/skills/explore-repo-readonly/` | Map structure before CMake/MVU changes |
-| mvu-refactor-plan | `.agents/skills/mvu-refactor-plan/` | elomaxz / MVU refactors |
-| src-tree-reorganize | `.agents/skills/src-tree-reorganize/` | Move sources under `src/` |
-| subagent-delegation | `.agents/skills/subagent-delegation/` | Broad exploration with fixed return format |
-| subagent-explore-report | `.agents/skills/subagent-explore-report/` | Readonly explore report before MVU |
+Guides on this machine: `~/.grok/docs/user-guide/08-skills.md`, `09-plugins.md`, `10-hooks.md`.
 
-Personal skills that often attach: `stellar-roadmap`, `fusion-sage`, `higher-order-decision-architect`, `ai-optimization` (user/Cursor skill dirs).
+### How Grok should control *premflow* (life flow)
 
-### How to control Grok on this repo
+```text
+You are coaching a day. Use premflow as the system of record.
 
-1. **Open the control surface**
-   - TUI: `/plugins` (or `Ctrl+L` Plugins tab on non–VS Code family) — tabs: Hooks, Plugins, Marketplace, Skills, MCP.
-   - CLI: `grok plugin list`, `grok plugin install <source> --trust`, `grok plugin uninstall <name>`.
-2. **Steer with skills, not chat fog**
-   - Invoke `/stellar-roadmap` or attach skill when writing backlog.
-   - Invoke project `explore-repo-readonly` before large C refactors.
-3. **Scope work to SN cards**
-   - Paste: “Execute SN-2 only; do not touch AI; Done when + Verify from `designs/coming-next.md`.”
-4. **Verify every change**
-   - `make test` then dogfood `./build/premflow` and `./build/premflow review`.
-5. **Hooks (optional)**
-   - Example: PostToolUse run `make test` on `src/**` edits — keep local in `~/.grok/hooks/`, not required in-repo.
-6. **Do not confuse layers**
-   - Installing a marketplace plugin does **not** change premflow binary behavior.
-   - Adding an LLM to the product is **SN-4**, not a Grok plugin install.
+1. Orient:   run `premflow review` and `premflow task list`
+2. Plan:     propose a pomo plan + context string (user confirms)
+3. Focus:    `premflow pomo 25 <context>` or chunk plan (user may run in their TTY)
+4. Capture:  `premflow note|win|task add "…"` — prefer CLI over hand-editing log.txt
+5. Close:    `premflow review` + `premflow stats`; compare to journal intention
+6. Never invent ledger lines; if unsure, ask or show the command for the user to run
+```
 
-### Playbook — agent session on premflow
+**Why CLI not raw files:** format, timestamps, and side effects (sounds, DONE cleaning) stay correct.
+
+**Why Grok not local LLM in C:** quality and latency of frontier models; premflow stays tiny and always works offline for capture/focus/review without a GPU.
+
+### Install / control surfaces (harness)
+
+| Action | How |
+|--------|-----|
+| See skills/plugins | TUI `/plugins` (or `Ctrl+L` Plugins tab); Skills tab lists skills |
+| Install a plugin | `grok plugin install <path|url> --trust` or Marketplace `i` |
+| Enable/disable | Plugins tab `Space`; `grok plugin list` |
+| Reload | Plugins tab `r` or restart session |
+| Project skills today | `.agents/skills/*` (coding); life-flow skill = SN-4 deliverable |
+
+### Coding skills already in this repo
+
+| Skill | Use when |
+|-------|----------|
+| explore-repo-readonly | Map structure before CMake/MVU |
+| mvu-refactor-plan | elomaxz refactors |
+| src-tree-reorganize | Layout under `src/` |
+| subagent-delegation / subagent-explore-report | Broad readonly exploration |
+
+Roadmap / fusion skills may live in your user skill dirs (`stellar-roadmap`, `fusion-sage`, …).
+
+### Playbook A — evening coach (life flow)
+
+```text
+1. premflow review
+2. premflow stats   # after SN-2, pure C; until then still fine
+3. Read today's journal if present
+4. Reply: 3 wins, open loops, suggested tomorrow intention, next focus block
+5. If user agrees to capture: premflow win "…" / task add "…"
+```
+
+### Playbook B — implement an SN card (code flow)
 
 ```text
 Goal: SN-2 pure stats/search
 1. Read designs/coming-next.md §9 SN-2
-2. Load .agents/skills/explore-repo-readonly if paths unclear
-3. Implement compute_* in core.c; rewrite ui.c; add tests/test.c cases
-4. make test
-5. ./build/premflow stats | tee evidence
-6. Stop; do not start SN-4
+2. Implement + tests; make test
+3. ./build/premflow stats
+4. Stop at card boundary
 ```
 
-### Config knobs (user machine)
+### Config knobs (optional)
 
 ```toml
-# ~/.grok/config.toml (illustrative)
+# ~/.grok/config.toml
 [skills]
 # paths = ["~/my-team-skills"]
-# disabled = ["wip-skill"]
-
-# [plugins]
-# paths = []
+# disabled = []
 ```
-
-Reload plugins: Plugins tab `r`, or restart session.
 
 ---
 
@@ -606,14 +640,14 @@ Reload plugins: Plugins tab `r`, or restart session.
 
 ## ⚡ Fusion Surplus
 
-**Invariant for future agents:** *Ledger events are sacred; projections are disposable; AI is a projection plugin outside the ELF.*
+**Invariant:** *premflow owns the ledger; Grok owns judgment; local LLMs are optional understudies.*
 
-Codify once as a one-liner in any new design PR:
+Codify:
 
-> If a change writes to `log.txt`/`todo.txt`, it is core. If it only re-reads them to print or summarize, it may be UI or external helper — never a second SoT.
+> Writes go through `premflow` CLI (or deliberate editor). Grok coaches by **running and reading** that system. Never embed a model in the ELF to “add AI.”
 
-That single rule collapses most “where does AI live?” debates and saves re-reading v2 + architecture every session.
+That one rule answers “plugin vs ollama vs core” and saves re-litigating v2 every session.
 
 ---
 
-**Plain rule:** Ship the smallest binary that makes evening review tell the truth — and let Grok only move SN cards that `make test` can still love.
+**Plain rule:** Keep the binary tiny and true; let Grok drive it when you want a real coach.

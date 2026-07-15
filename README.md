@@ -80,7 +80,7 @@ Defaults should answer “what matters today?” Opt in to noise (`review --full
 
 ### Architecture backlog & agent control
 
-Deep overhaul roadmap (UX flow, pure-C polish cards, optional offline LLM path, Grok Build control): **[designs/coming-next.md](designs/coming-next.md)**. Related: [designs/architecture_v1.md](designs/architecture_v1.md), [designs/v2/premflow_v2.0.md](designs/v2/premflow_v2.0.md), [designs/pomo-interactive.md](designs/pomo-interactive.md).
+Deep overhaul roadmap (UX flow, pure-C polish, **Grok Build using premflow as tools/plugin**, local LLM as fallback only): **[designs/coming-next.md](designs/coming-next.md)**. Related: [designs/architecture_v1.md](designs/architecture_v1.md), [designs/v2/premflow_v2.0.md](designs/v2/premflow_v2.0.md), [designs/pomo-interactive.md](designs/pomo-interactive.md).
 
 ### Usage
 

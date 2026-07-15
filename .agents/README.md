@@ -1,15 +1,22 @@
 # Agent control surface (premflow)
 
-**Source of truth for next work:** [`designs/coming-next.md`](../designs/coming-next.md)
+**Source of truth:** [`designs/coming-next.md`](../designs/coming-next.md)
+
+## Two jobs for Grok
+
+| Job | Goal | Entry |
+|-----|------|--------|
+| **Life flow** | Grok *uses* premflow (review, pomo, capture) as tools — preferred AI path vs local ollama | coming-next **§8**, **§15**, **SN-4** |
+| **Code flow** | Change the C repo against SN cards | SN-1…SN-6 + skills below |
 
 ## Quick steer
 
-1. Run **SN-1 dogfood** before product code: `make test`, `./build/premflow`, `./build/premflow review`.
-2. Pick one **SN-*** card from the roadmap; do not invent parallel architecture.
-3. Load project skills under `.agents/skills/` when they match (explore-repo-readonly, mvu-refactor-plan, …).
-4. Grok Build skills/plugins/hooks are harness controls — see coming-next **§15**, not C product code.
+1. **SN-1 dogfood:** `make test`, `./build/premflow`, `./build/premflow review`.
+2. Life coach: run real `premflow` commands; prefer CLI writes over inventing log lines.
+3. Code work: one **SN-*** card at a time; Done when + Verify from the roadmap.
+4. Harness knobs: skills, plugins (`/plugins`, `grok plugin …`), hooks — see §15.
 
-## Skills in this repo
+## Skills in this repo (coding)
 
 | Skill | Role |
 |-------|------|
@@ -20,4 +27,4 @@
 
 ## Iron-peak
 
-Ledger + smart projection + optional external AI — plain text stays SoT. See fusion surplus in `designs/coming-next.md`.
+Ledger (premflow) + projection (C review) + judgment (Grok plugin/skills). Plain text stays SoT.
