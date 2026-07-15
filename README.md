@@ -82,11 +82,11 @@ Defaults should answer “what matters today?” Opt in to noise (`review --full
 
 Deep overhaul roadmap (UX flow, pure-C polish, **Grok Build using premflow as tools/plugin**, local LLM as fallback only): **[designs/coming-next.md](designs/coming-next.md)**. Ledger line grammar: **[designs/ledger-contract.md](designs/ledger-contract.md)**. Related: [designs/architecture_v1.md](designs/architecture_v1.md), [designs/v2/premflow_v2.0.md](designs/v2/premflow_v2.0.md), [designs/pomo-interactive.md](designs/pomo-interactive.md).
 
-**Grok plugin (full):** `~/Work/personal/plugins/premflow` — slash commands `/note` `/win` `/task` `/review` `/focus` `/journal` + skill. Interactive **pomo** opens an external terminal (`bin/pf-focus`); **journal --ensure** prints today’s path without blocking on `$EDITOR`.
+**Grok plugin (full):** `https://github.com/p10ns11y/plugins (clone → premflow/)` — slash commands `/note` `/win` `/task` `/review` `/focus` `/journal` + skill. Interactive **pomo** opens an external terminal (`bin/pf-focus`); **journal --ensure** prints today’s path without blocking on `$EDITOR`.
 
 ```bash
-ln -sfn ~/Work/personal/plugins/premflow ~/.grok/plugins/premflow
-ln -sfn ~/Work/personal/plugins/premflow/skills/premflow ~/.grok/skills/premflow
+ln -sfn https://github.com/p10ns11y/plugins (clone → premflow/) ~/.grok/plugins/premflow
+ln -sfn https://github.com/p10ns11y/plugins (clone → premflow/)/skills/premflow ~/.grok/skills/premflow
 make install   # so PATH premflow has journal --ensure
 ```
 
