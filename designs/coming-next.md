@@ -536,7 +536,7 @@ mindmap
 
 | Job | What Grok does | Package |
 |-----|----------------|---------|
-| **A. Life flow** | Run `premflow` for capture/focus/review; coach from stdout + `~/.premflow` | SN-4 life-flow skill/plugin (**build this**) |
+| **A. Daily capture** | Run `premflow` for capture/focus/review; coach from stdout + `~/.premflow` | Skill `premflow` (**shipped** under personal skills) |
 | **B. Code flow** | Change the C repo against SN cards; `make test` | Existing `.agents/skills/*` + this roadmap |
 
 You already control Grok with the usual harness knobs (skills, plugins, hooks). Premflow stays the **fast, offline, correct ledger**; Grok stays the **judgment layer**.
@@ -577,7 +577,7 @@ You are coaching a day. Use premflow as the system of record.
 | Install a plugin | `grok plugin install <path|url> --trust` or Marketplace `i` |
 | Enable/disable | Plugins tab `Space`; `grok plugin list` |
 | Reload | Plugins tab `r` or restart session |
-| Project skills today | `.agents/skills/*` (coding); life-flow skill = SN-4 deliverable |
+| Project skills today | `.agents/skills/*` (coding); daily capture = `~/Work/personal/skills/premflow` |
 
 ### Coding skills already in this repo
 
