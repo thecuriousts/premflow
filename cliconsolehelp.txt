@@ -27,8 +27,14 @@ COMMANDS
      journal
             Open today's daily journal (creates template if new).
 
-     pomo [minutes]
-            Start a pomodoro timer (default 25 minutes).
+     pomo [minutes|plan] [context…]
+            Start a pomodoro timer. Default 25 minutes focus.
+            Multi-chunk plan: comma-separated minutes alternating focus/break
+            (e.g. 20,4,20,4 → focus 20, break 4, focus 20, break 4).
+            Optional context labels the session and is written to the [POMO] log
+            (e.g. pomo 25 ship review PR · pomo deep work on auth).
+            Live controls (TTY): space/p pause-resume, r restart segment,
+            R reset plan, q quit.
 
      edit [todo]
             Open notes or tasks in $EDITOR (default: nano).

@@ -142,13 +142,238 @@ bool test_journal_path(
     return true;
 }
 
+bool test_pomo_plan_parse(
+    void
+) {
+    int minutes[POMO_MAX_SEGMENTS];
+    int count = 0;
+
+    /* Default / empty → single 25 focus */
+    assert(pomo_plan_parse(NULL, minutes, &count, POMO_MAX_SEGMENTS) == 0);
+    assert(count == 1 && minutes[0] == POMO_DEFAULT_MINUTES);
+
+    assert(pomo_plan_parse("", minutes, &count, POMO_MAX_SEGMENTS) == 0);
+    assert(count == 1 && minutes[0] == 25);
+
+    /* Single integer */
+    assert(pomo_plan_parse("50", minutes, &count, POMO_MAX_SEGMENTS) == 0);
+    assert(count == 1 && minutes[0] == 50);
+
+    /* Classic multi-chunk: focus 20, break 4, focus 20, break 4 */
+    assert(pomo_plan_parse("20,4,20,4", minutes, &count, POMO_MAX_SEGMENTS) == 0);
+    assert(count == 4);
+    assert(minutes[0] == 20 && minutes[1] == 4 && minutes[2] == 20 && minutes[3] == 4);
+
+    /* Whitespace around commas */
+    assert(pomo_plan_parse(" 15 , 5 , 15 ", minutes, &count, POMO_MAX_SEGMENTS) == 0);
+    assert(count == 3 && minutes[0] == 15 && minutes[1] == 5 && minutes[2] == 15);
+
+    /* Invalid plans */
+    assert(pomo_plan_parse("0", minutes, &count, POMO_MAX_SEGMENTS) == -1);
+    assert(pomo_plan_parse("-5", minutes, &count, POMO_MAX_SEGMENTS) == -1);
+    assert(pomo_plan_parse("abc", minutes, &count, POMO_MAX_SEGMENTS) == -1);
+    assert(pomo_plan_parse("20,", minutes, &count, POMO_MAX_SEGMENTS) == -1);
+    assert(pomo_plan_parse("20,,4", minutes, &count, POMO_MAX_SEGMENTS) == -1);
+    assert(pomo_plan_parse("20a", minutes, &count, POMO_MAX_SEGMENTS) == -1);
+
+    return true;
+}
+
+bool test_pomo_tick_and_pause(
+    void
+) {
+    int plan[] = {1, 1}; /* 1 min focus, 1 min break — tick in seconds */
+    PomoSession s;
+    pomo_session_init(&s, plan, 2);
+    assert(s.running == 1);
+    assert(s.paused == 0);
+    assert(s.remaining_seconds == 60);
+    assert(pomo_session_phase(&s) == POMO_PHASE_FOCUS);
+
+    /* Tick decreases remaining only when not paused */
+    assert(pomo_session_tick(&s) == POMO_EVT_TICK);
+    assert(s.remaining_seconds == 59);
+
+    pomo_session_apply(&s, POMO_CTRL_PAUSE_TOGGLE);
+    assert(s.paused == 1);
+    int frozen = s.remaining_seconds;
+    assert(pomo_session_tick(&s) == POMO_EVT_NONE);
+    assert(s.remaining_seconds == frozen);
+
+    pomo_session_apply(&s, POMO_CTRL_PAUSE_TOGGLE);
+    assert(s.paused == 0);
+    assert(pomo_session_tick(&s) == POMO_EVT_TICK);
+    assert(s.remaining_seconds == frozen - 1);
+
+    return true;
+}
+
+bool test_pomo_restart_and_reset(
+    void
+) {
+    int plan[] = {2, 1, 2}; /* 2m focus, 1m break, 2m focus */
+    PomoSession s;
+    pomo_session_init(&s, plan, 3);
+
+    /* Burn some time on segment 0 */
+    for (int i = 0; i < 30; i++) {
+        pomo_session_tick(&s);
+    }
+    assert(s.remaining_seconds == 2 * 60 - 30);
+    assert(s.current_index == 0);
+
+    /* Restart restores current segment full duration without advancing index */
+    pomo_session_apply(&s, POMO_CTRL_RESTART);
+    assert(s.current_index == 0);
+    assert(s.remaining_seconds == 120);
+    assert(s.paused == 0);
+
+    /* Advance to segment 1 by completing remaining seconds */
+    s.remaining_seconds = 1;
+    assert(pomo_session_tick(&s) == POMO_EVT_SEGMENT_COMPLETE);
+    assert(s.current_index == 1);
+    assert(pomo_session_phase(&s) == POMO_PHASE_BREAK);
+    assert(s.remaining_seconds == 60);
+    assert(s.last_completed_phase == POMO_PHASE_FOCUS);
+
+    /* Tick into break, then reset → segment 0 full duration */
+    pomo_session_tick(&s);
+    assert(s.remaining_seconds == 59);
+    pomo_session_apply(&s, POMO_CTRL_RESET);
+    assert(s.current_index == 0);
+    assert(s.remaining_seconds == 120);
+    assert(s.paused == 0);
+    assert(pomo_session_phase(&s) == POMO_PHASE_FOCUS);
+
+    return true;
+}
+
+bool test_pomo_segment_advance_and_plan_complete(
+    void
+) {
+    /* Use 1-second segments by initializing then overriding remaining_seconds.
+     * Plan minutes stay positive for init; we drive via remaining_seconds. */
+    int plan[] = {1, 1, 1, 1}; /* 20,4,20,4 shape — four segments */
+    PomoSession s;
+    pomo_session_init(&s, plan, 4);
+
+    assert(pomo_session_phase(&s) == POMO_PHASE_FOCUS);
+    s.remaining_seconds = 1;
+    assert(pomo_session_tick(&s) == POMO_EVT_SEGMENT_COMPLETE);
+    assert(s.last_completed_phase == POMO_PHASE_FOCUS);
+    assert(s.current_index == 1);
+    assert(pomo_session_phase(&s) == POMO_PHASE_BREAK);
+
+    s.remaining_seconds = 1;
+    assert(pomo_session_tick(&s) == POMO_EVT_SEGMENT_COMPLETE);
+    assert(s.last_completed_phase == POMO_PHASE_BREAK);
+    assert(s.current_index == 2);
+    assert(pomo_session_phase(&s) == POMO_PHASE_FOCUS);
+
+    s.remaining_seconds = 1;
+    assert(pomo_session_tick(&s) == POMO_EVT_SEGMENT_COMPLETE);
+    assert(s.current_index == 3);
+    assert(pomo_session_phase(&s) == POMO_PHASE_BREAK);
+
+    s.remaining_seconds = 1;
+    assert(pomo_session_tick(&s) == POMO_EVT_PLAN_COMPLETE);
+    assert(s.last_completed_phase == POMO_PHASE_BREAK);
+    assert(s.running == 0);
+
+    /* Further ticks do nothing */
+    assert(pomo_session_tick(&s) == POMO_EVT_NONE);
+
+    /* Parse of real 20,4,20,4 lengths */
+    int m[4];
+    int n = 0;
+    assert(pomo_plan_parse("20,4,20,4", m, &n, 4) == 0);
+    pomo_session_init(&s, m, n);
+    assert(s.segment_count == 4);
+    assert(s.segment_minutes[0] == 20 && s.segment_minutes[1] == 4);
+    assert(s.segment_minutes[2] == 20 && s.segment_minutes[3] == 4);
+    assert(pomo_session_segment_seconds(&s) == 20 * 60);
+
+    return true;
+}
+
 bool test_pomodoro_logic(
     void
 ) {
-    // We only verify the function accepts edge-case inputs
-    // without starting the actual timer (which would block).
-    // The real timer logic is tested manually.
-    // If we reach here without crashing on parameter handling, it's good.
+    /* Aggregate smoke: parse → init → pause/resume → restart → reset → complete */
+    int m[POMO_MAX_SEGMENTS];
+    int n = 0;
+    assert(pomo_plan_parse("20,4,20,4", m, &n, POMO_MAX_SEGMENTS) == 0);
+    assert(n == 4);
+
+    PomoSession s;
+    pomo_session_init(&s, m, n);
+    assert(s.remaining_seconds == 20 * 60);
+
+    pomo_session_apply(&s, POMO_CTRL_PAUSE_TOGGLE);
+    int rem = s.remaining_seconds;
+    assert(pomo_session_tick(&s) == POMO_EVT_NONE);
+    assert(s.remaining_seconds == rem);
+
+    pomo_session_apply(&s, POMO_CTRL_PAUSE_TOGGLE);
+    s.remaining_seconds = 10;
+    for (int i = 0; i < 5; i++) {
+        pomo_session_tick(&s);
+    }
+    assert(s.remaining_seconds == 5);
+    pomo_session_apply(&s, POMO_CTRL_RESTART);
+    assert(s.remaining_seconds == 20 * 60);
+
+    s.remaining_seconds = 1;
+    assert(pomo_session_tick(&s) == POMO_EVT_SEGMENT_COMPLETE);
+    pomo_session_apply(&s, POMO_CTRL_RESET);
+    assert(s.current_index == 0 && s.remaining_seconds == 20 * 60);
+
+    return true;
+}
+
+bool test_pomo_context_and_split(
+    void
+) {
+    char plan[128];
+    char ctx[MAX_LINE];
+    char body[MAX_LINE];
+
+    /* No args → empty plan + empty context */
+    pomo_split_args(0, NULL, plan, sizeof(plan), ctx, sizeof(ctx));
+    assert(plan[0] == '\0' && ctx[0] == '\0');
+
+    /* Plan only */
+    char *a1[] = {"25"};
+    pomo_split_args(1, a1, plan, sizeof(plan), ctx, sizeof(ctx));
+    assert(strcmp(plan, "25") == 0);
+    assert(ctx[0] == '\0');
+
+    /* Chunk plan + multi-word context */
+    char *a2[] = {"20,4,20,4", "ship", "review", "PR"};
+    pomo_split_args(4, a2, plan, sizeof(plan), ctx, sizeof(ctx));
+    assert(strcmp(plan, "20,4,20,4") == 0);
+    assert(strcmp(ctx, "ship review PR") == 0);
+
+    /* Context only (no plan token) → default plan empty, full context */
+    char *a3[] = {"deep", "work", "on", "auth"};
+    pomo_split_args(4, a3, plan, sizeof(plan), ctx, sizeof(ctx));
+    assert(plan[0] == '\0');
+    assert(strcmp(ctx, "deep work on auth") == 0);
+
+    /* Single plan + single context word */
+    char *a4[] = {"50", "writing"};
+    pomo_split_args(2, a4, plan, sizeof(plan), ctx, sizeof(ctx));
+    assert(strcmp(plan, "50") == 0);
+    assert(strcmp(ctx, "writing") == 0);
+
+    /* Log body formatting */
+    pomo_format_log_body(NULL, body, sizeof(body));
+    assert(strcmp(body, "pomodoro session") == 0);
+    pomo_format_log_body("", body, sizeof(body));
+    assert(strcmp(body, "pomodoro session") == 0);
+    pomo_format_log_body("ship review PR", body, sizeof(body));
+    assert(strcmp(body, "ship review PR") == 0);
+
     return true;
 }
 
@@ -204,7 +429,12 @@ int main(
     TEST(test_complete_task);
     TEST(test_config_template);
     TEST(test_journal_path);
+    TEST(test_pomo_plan_parse);
+    TEST(test_pomo_tick_and_pause);
+    TEST(test_pomo_restart_and_reset);
+    TEST(test_pomo_segment_advance_and_plan_complete);
     TEST(test_pomodoro_logic);
+    TEST(test_pomo_context_and_split);
     TEST(test_journal_creation);
 
     printf("\n=====================================\n");

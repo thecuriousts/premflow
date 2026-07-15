@@ -22,7 +22,7 @@ A minimalist productivity CLI in pure C — fewer flags, less noise, more signal
 - 📝 Quick notes & wins logging
 - ✅ Task management (add, list, complete)
 - 📅 **Smart daily review** — pending todos and recent wins/notes/dones first; pomodoros summarized, not spammed
-- 🍅 Pomodoro timer with sound notifications
+- 🍅 **Interactive pomodoro** — multi-chunk plans (`20,4,20,4`), session context labels, pause/restart/reset on a TTY, sound + `[POMO]` log on focus end
 - 📖 Daily journal with template
 - 🔍 Search across logs & tasks
 - 📊 Personal stats dashboard
@@ -73,6 +73,7 @@ Recent work on this branch doubles down on **less ceremony, clearer output**:
 | `premflow review` | Curated end-of-day view: priorities, wins, notes, dones; POMO sessions counted, not listed line-by-line |
 | `premflow review --full` | Raw log tail + full task list only when you need everything |
 | `premflow task list` | Full todo file, always |
+| `premflow pomo [plan] [context…]` | Focus blocks you can steer: chunk plans, labels, live keys |
 | Plain text under `~/.premflow/` | No database, no sync service — grep-friendly logs |
 
 Defaults should answer “what matters today?” Opt in to noise (`review --full`) instead of wading through it every evening.
@@ -88,7 +89,10 @@ premflow win "Nailed the demo"
 premflow task add "Buy milk"
 premflow task list               # All active tasks
 premflow task done 2
-premflow pomo 25
+premflow pomo 25                 # Single focus block (default 25)
+premflow pomo 20,4,20,4          # Multi-chunk: focus/break alternating
+premflow pomo 25 ship review PR  # Plan + session context (logged on focus end)
+premflow pomo deep work on auth  # Context only (default 25m plan)
 premflow journal
 premflow stats
 premflow review                  # Smart review (recommended)
@@ -100,6 +104,21 @@ premflow config sound
 
 `premflow --help` is intentionally unsupported (unknown command). Muscle memory: bare binary for help, subcommand for work.
 
+#### Pomodoro (interactive)
+
+First token is a **plan** when it parses as minutes or a comma plan (`25`, `20,4,20,4`); otherwise all words after `pomo` are **session context** with the default 25m plan. Context is shown live and written into each focus `[POMO]` log line.
+
+| Key | Action |
+|-----|--------|
+| `space` / `p` | Pause / resume (remaining time kept) |
+| `r` | Restart current segment to full duration |
+| `R` | Reset whole plan to segment 1 |
+| `q` | Quit |
+
+Even plan indices are **focus**, odd are **break**. Sound + log fire on focus completion only.
+
+![Interactive pomodoro — pause, restart, reset, quit](screenshots/pomo-interactive-2026-07-15.png)
+
 #### Example daily workflow
 
 ```bash
@@ -107,8 +126,9 @@ premflow config sound
 premflow journal
 premflow task add "Finish project proposal"
 
-# Focus
-premflow pomo 50
+# Focus (labeled session or full day plan)
+premflow pomo 50 ship project proposal
+# premflow pomo 25,5,25,5,25,15 deep work day
 
 # Evening — signal, not spam
 premflow win "Shipped v2.0"
@@ -168,7 +188,7 @@ node bin/swarm.js flow task list   # == premflow task list (same files)
 
 ```bash
 make              # Configure and build (output in build/)
-make test         # Run all 8 comprehensive tests via ctest
+make test         # Run unit tests via ctest
 make format       # Apply clang-format to all sources (.clang-format)
 make format-check # Fail if sources are not formatted (used in CI)
 make clean        # Remove build/ directory
@@ -196,10 +216,10 @@ The test suite includes:
 - Append / complete task with real temp files
 - Config template creation
 - Journal path & creation
-- Pomodoro edge cases (0, negative values)
+- Pomodoro plan parse, pause/tick, restart/reset, segment advance, context split + log body
 - Full journal template verification
 
-All tests use `mkstemp()` for safe, isolated file I/O testing.
+All tests use `mkstemp()` for safe, isolated file I/O testing. Pure pomo session logic is driven without wall-clock multi-minute waits.
 
 
 ### Philosophy
@@ -214,7 +234,7 @@ Design notes and v2 direction: **[designs/](designs/)** (start with [architectur
 
 ### Architecture (short)
 
-Each command is a fresh process: `parse_argv` → `elomaxz_run_batch` (one message) → `update` / effects / `view`. No interactive runner, no `--help` parser — fewer code paths, faster habit loop. Details, diagrams, and runner comparison: **[designs/architecture_v1.md](designs/architecture_v1.md)**.
+Each command is a fresh process: `parse_argv` → `elomaxz_run_batch` (one message) → `update` / effects / `view`. No REPL or `--help` parser — fewer code paths, faster habit loop. The pomodoro effect is the one long-running in-process loop (TTY keys + pure `PomoSession` ticks). Details, diagrams, and runner comparison: **[designs/architecture_v1.md](designs/architecture_v1.md)**. Interactive pomo design: **[designs/pomo-interactive.md](designs/pomo-interactive.md)**.
 
 
 ### Project Structure
@@ -239,9 +259,10 @@ premflow/
 
 ### Screenshots
 
-![build](/screenshots/build.sh-2026-04-24_22-30-24.png)
-![make](/screenshots/make-install-2026-04-24_22-32-44.png)
-![usecase](/screenshots/usecase-2026-04-24_23-23-00.png)
+![Interactive pomodoro](screenshots/pomo-interactive-2026-07-15.png)
+![build](screenshots/build.sh-2026-04-24_22-30-24.png)
+![make](screenshots/make-install-2026-04-24_22-32-44.png)
+![usecase](screenshots/usecase-2026-04-24_23-23-00.png)
 
 
 ### Todos

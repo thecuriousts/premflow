@@ -22,7 +22,8 @@ void show_help(
     puts("  ✔️  task done <n>");
     puts("  🏆 win \"great work\"");
     puts("  📖 journal");
-    puts("  🍅 pomo [minutes]");
+    puts("  🍅 pomo [plan] [context…]  e.g. 25 ship PR  |  20,4 deep work");
+    puts("       live: [space]/p pause  [r] restart  [R] reset  [q] quit");
     puts("  ✏️  edit [todo]");
     puts("  🔍 search \"keyword\"");
     puts("  📊 stats");

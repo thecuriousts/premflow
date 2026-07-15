@@ -12,6 +12,7 @@
 !.clang-format
 !*.sh
 !LICENSE
+!screenshots/
 !screenshots/*.png
 !*.png
 

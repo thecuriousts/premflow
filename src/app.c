@@ -65,7 +65,8 @@ static void emit_effect(
     EffectKind kind,
     const char *text,
     int task_num,
-    int pomo_minutes
+    int pomo_minutes,
+    const char *pomo_plan
 ) {
     EffectPayload *p = malloc(sizeof(EffectPayload));
     if (!p) {
@@ -79,6 +80,9 @@ static void emit_effect(
     p->pomo_minutes = pomo_minutes;
     if (text) {
         strncpy(p->text, text, sizeof(p->text) - 1);
+    }
+    if (pomo_plan) {
+        strncpy(p->pomo_plan, pomo_plan, sizeof(p->pomo_plan) - 1);
     }
     cmds_out[*n] = elomaxz_make_cmd(CMD_CUSTOM, p, sizeof(EffectPayload));
     if (cmds_out[*n]) {
@@ -126,7 +130,7 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_NOTE, m->text, 0, 0);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_NOTE, m->text, 0, 0, NULL);
             return (Model) model_new(0, DISPLAY_NONE, "✓ Note saved");
 
         case PF_MSG_TASK_ADD:
@@ -135,7 +139,7 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_TODO, m->text, 0, 0);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_TODO, m->text, 0, 0, NULL);
             return (Model) model_new(0, DISPLAY_NONE, "✓ Task added");
 
         case PF_MSG_TASK_LIST:
@@ -147,7 +151,7 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_TASK_DONE, NULL, m->task_num, 0);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_TASK_DONE, NULL, m->task_num, 0, NULL);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         case PF_MSG_WIN:
@@ -156,22 +160,24 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_WIN, m->text, 0, 0);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_WIN, m->text, 0, 0, NULL);
             return (Model) model_new(0, DISPLAY_NONE, "✓ Win logged");
 
         case PF_MSG_JOURNAL:
-            emit_effect(cmds_out, num_cmds_out, EFFECT_JOURNAL, NULL, 0, 0);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_JOURNAL, NULL, 0, 0, NULL);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         case PF_MSG_POMO:
-            emit_effect(cmds_out, num_cmds_out, EFFECT_POMO, NULL, 0, m->pomo_minutes);
+            /* text holds chunk plan (e.g. "20,4,20,4"); empty → default focus */
+            emit_effect(cmds_out, num_cmds_out, EFFECT_POMO, m->text, 0, m->pomo_minutes,
+                        m->pomo_plan[0] ? m->pomo_plan : NULL);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         case PF_MSG_EDIT:
             if (m->edit_todo) {
-                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_TODO, NULL, 0, 0);
+                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_TODO, NULL, 0, 0, NULL);
             } else {
-                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_LOG, NULL, 0, 0);
+                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_LOG, NULL, 0, 0, NULL);
             }
 
             return (Model) model_new(0, DISPLAY_NONE, NULL);
@@ -196,7 +202,7 @@ Model pf_update(
         }
 
         case PF_MSG_CONFIG_SOUND:
-            emit_effect(cmds_out, num_cmds_out, EFFECT_CONFIG_SOUND, NULL, 0, 0);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_CONFIG_SOUND, NULL, 0, 0, NULL);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         default:
@@ -364,7 +370,28 @@ PremflowMsg *parse_argv(
         msg->type = PF_MSG_JOURNAL;
     } else if (strcmp(cmd, "pomo") == 0) {
         msg->type = PF_MSG_POMO;
-        msg->pomo_minutes = argc > 2 ? atoi(argv[2]) : 25;
+        msg->text[0] = '\0';
+        msg->pomo_plan[0] = '\0';
+        msg->pomo_minutes = POMO_DEFAULT_MINUTES;
+        /*
+         * Usage:
+         *   pomo | pomo 25 | pomo 20,4,20,4
+         *   pomo 25 ship the review
+         *   pomo 20,4 deep work on auth
+         *   pomo ship the review          (default plan + context)
+         */
+        if (argc > 2) {
+            pomo_split_args(argc - 2, argv + 2, msg->pomo_plan, sizeof(msg->pomo_plan),
+                            msg->text, sizeof(msg->text));
+            if (msg->pomo_plan[0]) {
+                int probe[POMO_MAX_SEGMENTS];
+                int nseg = 0;
+                if (pomo_plan_parse(msg->pomo_plan, probe, &nseg, POMO_MAX_SEGMENTS) ==
+                    0) {
+                    msg->pomo_minutes = probe[0];
+                }
+            }
+        }
     } else if (strcmp(cmd, "edit") == 0) {
         msg->type = PF_MSG_EDIT;
         msg->edit_todo = (argc > 2 && strcmp(argv[2], "todo") == 0) ? 1 : 0;

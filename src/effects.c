@@ -86,9 +86,18 @@ void pf_handle_cmd(
             open_editor(path);
             break;
         }
-        case EFFECT_POMO:
-            start_pomodoro(p->pomo_minutes);
+        case EFFECT_POMO: {
+            const char *plan = NULL;
+            char plan_buf[32];
+            if (p->pomo_plan[0]) {
+                plan = p->pomo_plan;
+            } else if (p->pomo_minutes > 0) {
+                snprintf(plan_buf, sizeof(plan_buf), "%d", p->pomo_minutes);
+                plan = plan_buf;
+            }
+            start_pomodoro(plan, p->text[0] ? p->text : NULL);
             break;
+        }
         case EFFECT_EDIT_LOG: {
             char *path = data_path(LOG_FILE);
             if (!path) {

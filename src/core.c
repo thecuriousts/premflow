@@ -1,8 +1,11 @@
 #include "premflow.h"
+#include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/stat.h>
+#include <termios.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -240,41 +243,447 @@ void open_editor(
     printf("✅ Saved.\n");
 }
 
-void start_pomodoro(
-    int minutes
-) {
-    if (minutes <= 0) {
-        minutes = 25;
-    }
-    int total_seconds = minutes * 60;
+// ==================================================================
+// Pomodoro session engine (pure state; no sleep/I/O)
+// ==================================================================
 
-    printf("🍅 Pomodoro started — %d min deep focus! Let's go! 🔥\n", minutes);
+int pomo_plan_parse(
+    const char *spec,
+    int *minutes_out,
+    int *count_out,
+    int max_count
+) {
+    if (!minutes_out || !count_out || max_count <= 0) {
+        return -1;
+    }
+
+    if (!spec || !*spec) {
+        minutes_out[0] = POMO_DEFAULT_MINUTES;
+        *count_out = 1;
+        return 0;
+    }
+
+    /* Skip leading/trailing whitespace copy into work buffer */
+    char buf[MAX_LINE];
+    size_t len = strlen(spec);
+    if (len >= sizeof(buf)) {
+        return -1;
+    }
+    memcpy(buf, spec, len + 1);
+
+    char *s = trim(buf);
+    if (!*s) {
+        minutes_out[0] = POMO_DEFAULT_MINUTES;
+        *count_out = 1;
+        return 0;
+    }
+
+    int count = 0;
+    char *p = s;
+    while (*p) {
+        while (*p == ' ' || *p == '\t') {
+            p++;
+        }
+        if (!*p) {
+            break;
+        }
+        if (!isdigit((unsigned char) *p)) {
+            return -1;
+        }
+        char *end = NULL;
+        long v = strtol(p, &end, 10);
+        if (end == p || v <= 0 || v > 24 * 60) {
+            return -1;
+        }
+        if (count >= max_count) {
+            return -1;
+        }
+        minutes_out[count++] = (int) v;
+        p = end;
+        while (*p == ' ' || *p == '\t') {
+            p++;
+        }
+        if (*p == ',') {
+            p++;
+            /* trailing comma is invalid */
+            while (*p == ' ' || *p == '\t') {
+                p++;
+            }
+            if (!*p) {
+                return -1;
+            }
+            continue;
+        }
+        if (*p != '\0') {
+            return -1;
+        }
+        break;
+    }
+
+    if (count == 0) {
+        return -1;
+    }
+    *count_out = count;
+    return 0;
+}
+
+void pomo_session_init(
+    PomoSession *s,
+    const int *minutes,
+    int count
+) {
+    if (!s) {
+        return;
+    }
+    memset(s, 0, sizeof(*s));
+    if (!minutes || count <= 0) {
+        s->segment_minutes[0] = POMO_DEFAULT_MINUTES;
+        s->segment_count = 1;
+    } else {
+        if (count > POMO_MAX_SEGMENTS) {
+            count = POMO_MAX_SEGMENTS;
+        }
+        for (int i = 0; i < count; i++) {
+            s->segment_minutes[i] = minutes[i] > 0 ? minutes[i] : POMO_DEFAULT_MINUTES;
+        }
+        s->segment_count = count;
+    }
+    s->current_index = 0;
+    s->remaining_seconds = s->segment_minutes[0] * 60;
+    s->paused = 0;
+    s->running = 1;
+    s->last_completed_phase = POMO_PHASE_FOCUS;
+}
+
+PomoPhase pomo_session_phase(
+    const PomoSession *s
+) {
+    if (!s || s->current_index < 0) {
+        return POMO_PHASE_FOCUS;
+    }
+    /* Even index = focus, odd = break (matches 20,4,20,4) */
+    return (s->current_index % 2 == 0) ? POMO_PHASE_FOCUS : POMO_PHASE_BREAK;
+}
+
+int pomo_session_segment_seconds(
+    const PomoSession *s
+) {
+    if (!s || s->current_index < 0 || s->current_index >= s->segment_count) {
+        return 0;
+    }
+    return s->segment_minutes[s->current_index] * 60;
+}
+
+void pomo_session_apply(
+    PomoSession *s,
+    PomoControl ctrl
+) {
+    if (!s || !s->running) {
+        return;
+    }
+    switch (ctrl) {
+        case POMO_CTRL_PAUSE_TOGGLE:
+            s->paused = !s->paused;
+            break;
+        case POMO_CTRL_RESTART:
+            s->remaining_seconds = pomo_session_segment_seconds(s);
+            s->paused = 0;
+            break;
+        case POMO_CTRL_RESET:
+            s->current_index = 0;
+            s->remaining_seconds = s->segment_minutes[0] * 60;
+            s->paused = 0;
+            break;
+        case POMO_CTRL_QUIT:
+            s->running = 0;
+            break;
+        case POMO_CTRL_NONE:
+        default:
+            break;
+    }
+}
+
+PomoEvent pomo_session_tick(
+    PomoSession *s
+) {
+    if (!s || !s->running || s->paused) {
+        return POMO_EVT_NONE;
+    }
+    if (s->remaining_seconds > 0) {
+        s->remaining_seconds--;
+    }
+    if (s->remaining_seconds > 0) {
+        return POMO_EVT_TICK;
+    }
+
+    /* Segment finished */
+    s->last_completed_phase = pomo_session_phase(s);
+    if (s->current_index + 1 >= s->segment_count) {
+        s->running = 0;
+        return POMO_EVT_PLAN_COMPLETE;
+    }
+    s->current_index++;
+    s->remaining_seconds = s->segment_minutes[s->current_index] * 60;
+    return POMO_EVT_SEGMENT_COMPLETE;
+}
+
+static void pomo_print_plan_summary(
+    const PomoSession *s
+) {
+    printf("🍅 Plan:");
+    for (int i = 0; i < s->segment_count; i++) {
+        if (i > 0) {
+            printf(" →");
+        }
+        if (i % 2 == 0) {
+            printf(" %dm focus", s->segment_minutes[i]);
+        } else {
+            printf(" %dm break", s->segment_minutes[i]);
+        }
+    }
+    printf("\n");
+}
+
+static void pomo_print_status(
+    const PomoSession *s
+) {
+    int total = pomo_session_segment_seconds(s);
+    int remaining = s->remaining_seconds;
+    int elapsed = total > 0 ? total - remaining : 0;
+    int percent = total > 0 ? (elapsed * 100) / total : 0;
+    if (percent > 100) {
+        percent = 100;
+    }
+    int idx = percent / 25;
+    if (idx > 4) {
+        idx = 4;
+    }
+    const char *circle[] = {"○", "◔", "◑", "◕", "●"};
+    PomoPhase phase = pomo_session_phase(s);
+    const char *phase_label = phase == POMO_PHASE_FOCUS ? "FOCUS" : "BREAK";
+    const char *icon = phase == POMO_PHASE_FOCUS ? "🍅" : "☕";
+    const char *pause_tag = s->paused ? "  ⏸ PAUSED" : "";
+
+    printf("\r\033[K%s %s  %02d:%02d  %3d%%  [%d/%d %s]%s", circle[idx], icon,
+           remaining / 60, remaining % 60, percent, s->current_index + 1, s->segment_count,
+           phase_label, pause_tag);
+    fflush(stdout);
+}
+
+static PomoControl pomo_map_key(
+    char c
+) {
+    switch (c) {
+        case ' ':
+        case 'p':
+        case 'P':
+            return POMO_CTRL_PAUSE_TOGGLE;
+        case 'r':
+            return POMO_CTRL_RESTART;
+        case 'R':
+        case '0':
+            return POMO_CTRL_RESET;
+        case 'q':
+        case 'Q':
+        case 3: /* Ctrl-C in raw mode if not signalled */
+            return POMO_CTRL_QUIT;
+        default:
+            return POMO_CTRL_NONE;
+    }
+}
+
+void pomo_format_log_body(
+    const char *context,
+    char *out,
+    size_t out_sz
+) {
+    if (!out || out_sz == 0) {
+        return;
+    }
+    if (context && context[0]) {
+        snprintf(out, out_sz, "%s", context);
+    } else {
+        snprintf(out, out_sz, "pomodoro session");
+    }
+}
+
+void pomo_split_args(
+    int argc,
+    char **argv,
+    char *plan_out,
+    size_t plan_sz,
+    char *context_out,
+    size_t context_sz
+) {
+    if (plan_out && plan_sz > 0) {
+        plan_out[0] = '\0';
+    }
+    if (context_out && context_sz > 0) {
+        context_out[0] = '\0';
+    }
+    if (argc <= 0 || !argv) {
+        return;
+    }
+
+    int probe[POMO_MAX_SEGMENTS];
+    int nseg = 0;
+    int ctx_start = 0;
+    if (pomo_plan_parse(argv[0], probe, &nseg, POMO_MAX_SEGMENTS) == 0) {
+        if (plan_out && plan_sz > 0) {
+            snprintf(plan_out, plan_sz, "%s", argv[0]);
+        }
+        ctx_start = 1;
+    }
+
+    if (!context_out || context_sz == 0) {
+        return;
+    }
+    context_out[0] = '\0';
+    for (int i = ctx_start; i < argc; i++) {
+        if (!argv[i]) {
+            continue;
+        }
+        if (context_out[0]) {
+            strncat(context_out, " ", context_sz - strlen(context_out) - 1);
+        }
+        strncat(context_out, argv[i], context_sz - strlen(context_out) - 1);
+    }
+}
+
+static void pomo_on_focus_complete(
+    const char *context
+) {
+    char body[MAX_LINE];
+    pomo_format_log_body(context, body, sizeof(body));
+    play_sound(sounds.pomo_complete);
+    append_entry(data_path(LOG_FILE), "[POMO]", body);
+}
+
+void start_pomodoro(
+    const char *plan_spec,
+    const char *context
+) {
+    int minutes[POMO_MAX_SEGMENTS];
+    int count = 0;
+    if (pomo_plan_parse(plan_spec, minutes, &count, POMO_MAX_SEGMENTS) != 0) {
+        fprintf(stderr,
+                "❌ Invalid pomo plan '%s'. Use minutes (e.g. 25) or a chunk plan "
+                "(e.g. 20,4,20,4).\n",
+                plan_spec ? plan_spec : "");
+        return;
+    }
+
+    PomoSession session;
+    pomo_session_init(&session, minutes, count);
+
+    if (context && context[0]) {
+        printf("🎯 Focus: %s\n", context);
+    }
+    pomo_print_plan_summary(&session);
+    printf("🔥 Let's go!  [space]/p pause  [r] restart segment  [R] reset plan  [q] "
+           "quit\n");
     play_sound(sounds.pomo_start);
 
-    // Beautiful Unicode circle progress (quarter steps)
-    const char *circle[] = {
-        "○", "◔", "◑", "◕", "●" // 0%, 25%, 50%, 75%, 100%
-    };
-
-    for (int remaining = total_seconds; remaining > 0; remaining--) {
-        int elapsed = total_seconds - remaining;
-        int percent = (elapsed * 100) / total_seconds;
-
-        // Choose circle based on percentage
-        int idx = percent / 25;
-        if (idx > 4) {
-            idx = 4;
+    int interactive = isatty(STDIN_FILENO);
+    struct termios old_tio, new_tio;
+    int raw_ok = 0;
+    if (interactive) {
+        if (tcgetattr(STDIN_FILENO, &old_tio) == 0) {
+            new_tio = old_tio;
+            new_tio.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
+            new_tio.c_cc[VMIN] = 0;
+            new_tio.c_cc[VTIME] = 0;
+            if (tcsetattr(STDIN_FILENO, TCSANOW, &new_tio) == 0) {
+                raw_ok = 1;
+            }
         }
-
-        printf("\r%s 🍅  %02d:%02d  %3d%%", circle[idx], remaining / 60, remaining % 60,
-               percent);
-        fflush(stdout);
-        sleep(1);
     }
 
-    printf("\n✅ Pomodoro complete! Amazing focus, Prem! 🎉\n");
-    play_sound(sounds.pomo_complete);
-    append_entry(data_path(LOG_FILE), "[POMO]", "pomodoro session");
+    while (session.running) {
+        pomo_print_status(&session);
+
+        struct timeval tv;
+        if (session.paused) {
+            /* Poll often while paused so resume feels snappy */
+            tv.tv_sec = 0;
+            tv.tv_usec = 200000;
+        } else {
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
+        }
+
+        fd_set rfds;
+        FD_ZERO(&rfds);
+        int ready = 0;
+        if (interactive) {
+            FD_SET(STDIN_FILENO, &rfds);
+            ready = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
+        } else {
+            /* Non-TTY: still run the plan (tests / pipes) with wall-clock ticks */
+            ready = select(0, NULL, NULL, NULL, &tv);
+        }
+
+        if (ready > 0 && interactive && FD_ISSET(STDIN_FILENO, &rfds)) {
+            char c = 0;
+            if (read(STDIN_FILENO, &c, 1) == 1) {
+                PomoControl ctrl = pomo_map_key(c);
+                if (ctrl == POMO_CTRL_QUIT) {
+                    pomo_session_apply(&session, POMO_CTRL_QUIT);
+                    printf("\n⏹ Pomodoro stopped.\n");
+                    break;
+                }
+                if (ctrl != POMO_CTRL_NONE) {
+                    pomo_session_apply(&session, ctrl);
+                    if (ctrl == POMO_CTRL_PAUSE_TOGGLE) {
+                        printf("\n%s\n", session.paused ? "⏸ Paused." : "▶ Resumed.");
+                    } else if (ctrl == POMO_CTRL_RESTART) {
+                        printf("\n↺ Segment restarted.\n");
+                    } else if (ctrl == POMO_CTRL_RESET) {
+                        printf("\n⏮ Plan reset to first segment.\n");
+                    }
+                }
+            }
+            continue; /* redisplay; don't tick on key-only wake */
+        }
+
+        /* Timeout: one second of running time when not paused */
+        if (!session.paused) {
+            PomoEvent ev = pomo_session_tick(&session);
+            if (ev == POMO_EVT_SEGMENT_COMPLETE) {
+                if (session.last_completed_phase == POMO_PHASE_FOCUS) {
+                    printf("\n✅ Focus segment complete! Logged. 🎉\n");
+                    pomo_on_focus_complete(context);
+                } else {
+                    printf("\n☕ Break over — back to focus when ready.\n");
+                }
+                if (session.current_index >= 0 &&
+                    session.current_index < session.segment_count) {
+                    PomoPhase next = pomo_session_phase(&session);
+                    printf("→ Next: segment %d/%d · %s (%dm)\n",
+                           session.current_index + 1, session.segment_count,
+                           next == POMO_PHASE_FOCUS ? "FOCUS" : "BREAK",
+                           session.segment_minutes[session.current_index]);
+                }
+            } else if (ev == POMO_EVT_PLAN_COMPLETE) {
+                if (session.last_completed_phase == POMO_PHASE_FOCUS) {
+                    printf("\n✅ Focus segment complete! Logged. 🎉\n");
+                    pomo_on_focus_complete(context);
+                } else {
+                    printf("\n☕ Break over.\n");
+                }
+                if (context && context[0]) {
+                    printf("🏁 Full plan complete — %s 🎉\n", context);
+                } else {
+                    printf("🏁 Full plan complete! Amazing work. 🎉\n");
+                }
+                break;
+            }
+        }
+    }
+
+    if (raw_ok) {
+        tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+    }
 }
 
 void list_active_tasks(

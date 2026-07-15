@@ -24,9 +24,10 @@ typedef enum {
 
 typedef struct {
     PremflowMsgType type;
-    char text[MAX_LINE];
+    char text[MAX_LINE]; /* note/task/win/search text; for pomo = session context */
     int task_num;
     int pomo_minutes;
+    char pomo_plan[128]; /* "25" / "20,4,20,4" / empty → default plan */
     int edit_todo;   /* 1 = todo file, 0 = log file */
     int review_full; /* 1 = show everything including all POMO, raw tail */
 } PremflowMsg;
@@ -62,9 +63,10 @@ typedef enum {
 
 typedef struct {
     EffectKind kind;
-    char text[MAX_LINE];
+    char text[MAX_LINE]; /* effect body; for EFFECT_POMO = session context */
     int task_num;
     int pomo_minutes;
+    char pomo_plan[128]; /* chunk plan for EFFECT_POMO; empty → default */
 } EffectPayload;
 
 typedef struct {
