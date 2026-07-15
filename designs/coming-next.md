@@ -77,7 +77,7 @@ flowchart TB
 | Search | C | Shell `grep` via `system()` | `src/ui.c` (`show_search`) |
 | Pure unit tests | B+ | Core paths + pomo engine; no LLM | `tests/test.c`, `CMakeLists.txt` (`test_runner`) |
 | Local-LLM-in-product path | C | v2 draft; **deprioritized** vs Grok bridge | `designs/v2/premflow_v2.0.md`, §8 |
-| Grok → premflow bridge | B | Life-flow skill: `~/Work/personal/skills/premflow-flow` (+ `~/.grok/skills` symlink) | skill `SKILL.md`, `designs/ledger-contract.md` |
+| Grok → premflow bridge | B | Skill: `~/Work/personal/skills/premflow` (+ `~/.grok/skills` symlink) | skill `SKILL.md`, `designs/ledger-contract.md` |
 | Agent steerability | B | Project skills + this roadmap | `.agents/skills/*`, this file |
 | data_path hazard | B | Documented; callers must copy | `src/core.c` (`data_path`), `.stellarfusion/state.json` |
 
@@ -401,7 +401,7 @@ sequenceDiagram
 
 | File | Work |
 |------|------|
-| `.grok/skills/premflow-flow/` or plugin dir | SKILL.md: when to run which CLI; never invent log lines |
+| `~/Work/personal/skills/premflow/` (or plugin dir) | SKILL.md: when to run which CLI; never invent log lines |
 | optional `commands/` | `/premflow-review`, `/premflow-focus`, `/premflow-capture` |
 | optional hooks | none required; SessionStart can print `premflow review` tip |
 | `designs/coming-next.md` §8 / §15 | contract for tool use |
@@ -500,7 +500,7 @@ gantt
 | 2026-06-03 | v2 LLM design draft `designs/v2/premflow_v2.0.md` |
 | 2026-07 | Interactive multi-chunk pomo + context (`designs/pomo-interactive.md`) |
 | 2026-07-15 | Stellar roadmap; **reframed AI path:** Grok uses premflow (plugin/skills), local LLM deprioritized |
-| 2026-07-15 | Ledger contract + body sanitize; life-flow skill `premflow-flow` under personal skills |
+| 2026-07-15 | Ledger contract + body sanitize; Grok skill named `premflow` under personal skills |
 
 ---
 

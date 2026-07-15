@@ -82,7 +82,7 @@ Defaults should answer “what matters today?” Opt in to noise (`review --full
 
 Deep overhaul roadmap (UX flow, pure-C polish, **Grok Build using premflow as tools/plugin**, local LLM as fallback only): **[designs/coming-next.md](designs/coming-next.md)**. Ledger line grammar: **[designs/ledger-contract.md](designs/ledger-contract.md)**. Related: [designs/architecture_v1.md](designs/architecture_v1.md), [designs/v2/premflow_v2.0.md](designs/v2/premflow_v2.0.md), [designs/pomo-interactive.md](designs/pomo-interactive.md).
 
-**In-session capture (Grok skill):** `~/Work/personal/skills/premflow-flow` — dump notes/wins/tasks via the real `premflow` CLI without leaving the agent. Symlink: `ln -sfn ~/Work/personal/skills/premflow-flow ~/.grok/skills/premflow-flow`.
+**In-session capture (Grok skill):** `~/Work/personal/skills/premflow` — dump notes/wins/tasks via the real `premflow` CLI without leaving the agent. Symlink: `ln -sfn ~/Work/personal/skills/premflow ~/.grok/skills/premflow`.
 
 ### Usage
 
