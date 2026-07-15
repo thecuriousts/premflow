@@ -351,6 +351,59 @@ void play_sound(
     }
 }
 
+bool ensure_journal(
+    char *path_out,
+    size_t path_out_sz,
+    int *created_out
+) {
+    if (created_out) {
+        *created_out = 0;
+    }
+    if (!path_out || path_out_sz == 0) {
+        return false;
+    }
+    path_out[0] = '\0';
+
+    if (!ensure_dirs()) {
+        return false;
+    }
+
+    char *jp = journal_path();
+    if (!jp) {
+        return false;
+    }
+    snprintf(path_out, path_out_sz, "%s", jp);
+
+    FILE *f = fopen(path_out, "r");
+    if (f) {
+        fclose(f);
+        return true;
+    }
+
+    f = fopen(path_out, "w");
+    if (!f) {
+        fprintf(stderr, "Error: Could not create journal %s\n", path_out);
+        return false;
+    }
+
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    char date[64];
+    strftime(date, sizeof(date), "%A, %B %d, %Y", tm);
+    fprintf(f,
+            "# 🌟 Daily Journal — %s\n\n"
+            "🙏 Grateful for:\n1. \n2. \n3. \n\n"
+            "📚 Learned today:\n\n"
+            "🚀 Tomorrow's intention:\n\n"
+            "💡 Today's win:\n\n",
+            date);
+    fclose(f);
+    if (created_out) {
+        *created_out = 1;
+    }
+    return true;
+}
+
 void open_editor(
     const char *filepath
 ) {

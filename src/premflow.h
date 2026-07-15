@@ -54,6 +54,10 @@ bool append_entry(const char *filepath, const char *prefix, const char *text);
 void play_sound(const char *command);
 void open_editor(const char *filepath);
 
+/* Ensure today's journal exists (create template if missing). Writes absolute path
+ * to path_out. Returns true on success. Does not open an editor. */
+bool ensure_journal(char *path_out, size_t path_out_sz, int *created_out);
+
 /* Multi-segment pomodoro session engine (pure; unit-testable) */
 #define POMO_MAX_SEGMENTS 32
 #define POMO_DEFAULT_MINUTES 25

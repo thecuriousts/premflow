@@ -66,7 +66,8 @@ static void emit_effect(
     const char *text,
     int task_num,
     int pomo_minutes,
-    const char *pomo_plan
+    const char *pomo_plan,
+    int journal_ensure
 ) {
     EffectPayload *p = malloc(sizeof(EffectPayload));
     if (!p) {
@@ -78,6 +79,7 @@ static void emit_effect(
     p->kind = kind;
     p->task_num = task_num;
     p->pomo_minutes = pomo_minutes;
+    p->journal_ensure = journal_ensure;
     if (text) {
         strncpy(p->text, text, sizeof(p->text) - 1);
     }
@@ -130,7 +132,7 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_NOTE, m->text, 0, 0, NULL);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_NOTE, m->text, 0, 0, NULL, 0);
             return (Model) model_new(0, DISPLAY_NONE, "✓ Note saved");
 
         case PF_MSG_TASK_ADD:
@@ -139,7 +141,7 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_TODO, m->text, 0, 0, NULL);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_TODO, m->text, 0, 0, NULL, 0);
             return (Model) model_new(0, DISPLAY_NONE, "✓ Task added");
 
         case PF_MSG_TASK_LIST:
@@ -151,7 +153,7 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_TASK_DONE, NULL, m->task_num, 0, NULL);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_TASK_DONE, NULL, m->task_num, 0, NULL, 0);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         case PF_MSG_WIN:
@@ -160,24 +162,25 @@ Model pf_update(
                 return (Model) model_new(1, DISPLAY_NONE, NULL);
             }
 
-            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_WIN, m->text, 0, 0, NULL);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_APPEND_WIN, m->text, 0, 0, NULL, 0);
             return (Model) model_new(0, DISPLAY_NONE, "✓ Win logged");
 
         case PF_MSG_JOURNAL:
-            emit_effect(cmds_out, num_cmds_out, EFFECT_JOURNAL, NULL, 0, 0, NULL);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_JOURNAL, NULL, 0, 0, NULL,
+                        m->journal_ensure);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         case PF_MSG_POMO:
             /* text holds chunk plan (e.g. "20,4,20,4"); empty → default focus */
             emit_effect(cmds_out, num_cmds_out, EFFECT_POMO, m->text, 0, m->pomo_minutes,
-                        m->pomo_plan[0] ? m->pomo_plan : NULL);
+                        m->pomo_plan[0] ? m->pomo_plan : NULL, 0);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         case PF_MSG_EDIT:
             if (m->edit_todo) {
-                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_TODO, NULL, 0, 0, NULL);
+                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_TODO, NULL, 0, 0, NULL, 0);
             } else {
-                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_LOG, NULL, 0, 0, NULL);
+                emit_effect(cmds_out, num_cmds_out, EFFECT_EDIT_LOG, NULL, 0, 0, NULL, 0);
             }
 
             return (Model) model_new(0, DISPLAY_NONE, NULL);
@@ -202,7 +205,7 @@ Model pf_update(
         }
 
         case PF_MSG_CONFIG_SOUND:
-            emit_effect(cmds_out, num_cmds_out, EFFECT_CONFIG_SOUND, NULL, 0, 0, NULL);
+            emit_effect(cmds_out, num_cmds_out, EFFECT_CONFIG_SOUND, NULL, 0, 0, NULL, 0);
             return (Model) model_new(0, DISPLAY_NONE, NULL);
 
         default:
@@ -368,6 +371,12 @@ PremflowMsg *parse_argv(
         join_args(2, argc, argv, msg->text, sizeof(msg->text));
     } else if (strcmp(cmd, "journal") == 0) {
         msg->type = PF_MSG_JOURNAL;
+        /* journal --ensure|--path : create template if needed, print path, no editor */
+        if (argc > 2 &&
+            (strcmp(argv[2], "--ensure") == 0 || strcmp(argv[2], "--path") == 0 ||
+             strcmp(argv[2], "ensure") == 0)) {
+            msg->journal_ensure = 1;
+        }
     } else if (strcmp(cmd, "pomo") == 0) {
         msg->type = PF_MSG_POMO;
         msg->text[0] = '\0';

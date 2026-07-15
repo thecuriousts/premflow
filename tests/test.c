@@ -182,6 +182,52 @@ bool test_journal_path(
     return true;
 }
 
+bool test_ensure_journal(
+    void
+) {
+    /* Drive real ensure_journal against a temp HOME */
+    char td[] = "/tmp/premflow_jhome_XXXXXX";
+    assert(mkdtemp(td) != NULL);
+    char *old_home = getenv("HOME");
+    setenv("HOME", td, 1);
+
+    char path[512];
+    int created = 0;
+    assert(ensure_journal(path, sizeof(path), &created) == true);
+    assert(created == 1);
+    assert(strstr(path, "journal-") != NULL);
+    assert(strstr(path, ".premflow/journal/") != NULL);
+
+    FILE *f = fopen(path, "r");
+    assert(f != NULL);
+    char buf[512];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    buf[n] = '\0';
+    fclose(f);
+    assert(strstr(buf, "Grateful for") != NULL);
+    assert(strstr(buf, "Tomorrow's intention") != NULL);
+
+    /* Second call: not created again */
+    created = -1;
+    assert(ensure_journal(path, sizeof(path), &created) == true);
+    assert(created == 0);
+
+    /* cleanup */
+    unlink(path);
+    char jdir[600], pdir[600];
+    snprintf(jdir, sizeof(jdir), "%s/.premflow/journal", td);
+    snprintf(pdir, sizeof(pdir), "%s/.premflow", td);
+    rmdir(jdir);
+    rmdir(pdir);
+    rmdir(td);
+    if (old_home) {
+        setenv("HOME", old_home, 1);
+    } else {
+        unsetenv("HOME");
+    }
+    return true;
+}
+
 bool test_pomo_plan_parse(
     void
 ) {
@@ -470,6 +516,7 @@ int main(
     TEST(test_complete_task);
     TEST(test_config_template);
     TEST(test_journal_path);
+    TEST(test_ensure_journal);
     TEST(test_pomo_plan_parse);
     TEST(test_pomo_tick_and_pause);
     TEST(test_pomo_restart_and_reset);

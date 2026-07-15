@@ -30,6 +30,7 @@ typedef struct {
     char pomo_plan[128]; /* "25" / "20,4,20,4" / empty → default plan */
     int edit_todo;   /* 1 = todo file, 0 = log file */
     int review_full; /* 1 = show everything including all POMO, raw tail */
+    int journal_ensure; /* 1 = create/print path only, no $EDITOR */
 } PremflowMsg;
 
 typedef enum {
@@ -67,6 +68,7 @@ typedef struct {
     int task_num;
     int pomo_minutes;
     char pomo_plan[128]; /* chunk plan for EFFECT_POMO; empty → default */
+    int journal_ensure;  /* 1 = no editor; print path */
 } EffectPayload;
 
 typedef struct {

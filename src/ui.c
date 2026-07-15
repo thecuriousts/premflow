@@ -21,7 +21,8 @@ void show_help(
     puts("  📋 task list");
     puts("  ✔️  task done <n>");
     puts("  🏆 win \"great work\"");
-    puts("  📖 journal");
+    puts("  📖 journal           (open today's journal in $EDITOR)");
+    puts("  📖 journal --ensure  (create template if needed; print path; no editor)");
     puts("  🍅 pomo [plan] [context…]  e.g. 25 ship PR  |  20,4 deep work");
     puts("       live: [space]/p pause  [r] restart  [R] reset  [q] quit");
     puts("  ✏️  edit [todo]");

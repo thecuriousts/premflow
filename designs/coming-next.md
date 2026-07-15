@@ -77,7 +77,7 @@ flowchart TB
 | Search | C | Shell `grep` via `system()` | `src/ui.c` (`show_search`) |
 | Pure unit tests | B+ | Core paths + pomo engine; no LLM | `tests/test.c`, `CMakeLists.txt` (`test_runner`) |
 | Local-LLM-in-product path | C | v2 draft; **deprioritized** vs Grok bridge | `designs/v2/premflow_v2.0.md`, §8 |
-| Grok → premflow bridge | B | Skill: `~/Work/personal/skills/premflow` (+ `~/.grok/skills` symlink) | skill `SKILL.md`, `designs/ledger-contract.md` |
+| Grok → premflow bridge | A | Full plugin: `~/Work/personal/plugins/premflow` (commands + pf-focus + journal --ensure) | plugin README, `commands/*`, `bin/pf-*` |
 | Agent steerability | B | Project skills + this roadmap | `.agents/skills/*`, this file |
 | data_path hazard | B | Documented; callers must copy | `src/core.c` (`data_path`), `.stellarfusion/state.json` |
 

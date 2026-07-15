@@ -55,34 +55,21 @@ void pf_handle_cmd(
             break;
         }
         case EFFECT_JOURNAL: {
-            char *path = journal_path();
-            if (!path) {
+            char path[512];
+            int created = 0;
+            if (!ensure_journal(path, sizeof(path), &created)) {
                 rt->exit_code = 1;
+                strncpy(rt->error, "Failed to ensure journal", sizeof(rt->error) - 1);
                 break;
             }
-
-            FILE *f = fopen(path, "r");
-            if (!f) {
-                f = fopen(path, "w");
-                if (f) {
-                    time_t now = time(NULL);
-                    struct tm *tm = localtime(&now);
-                    char date[64];
-                    strftime(date, sizeof(date), "%A, %B %d, %Y", tm);
-                    fprintf(f,
-                            "# 🌟 Daily Journal — %s\n\n"
-                            "🙏 Grateful for:\n1. \n2. \n3. \n\n"
-                            "📚 Learned today:\n\n"
-                            "🚀 Tomorrow's intention:\n\n"
-                            "💡 Today's win:\n\n",
-                            date);
-                    fclose(f);
-                    printf("📖 New journal created!\n");
-                }
-            } else {
-                fclose(f);
+            if (created) {
+                printf("📖 New journal created!\n");
             }
-
+            if (p->journal_ensure) {
+                /* Agent-safe: print path only — never block on $EDITOR */
+                printf("%s\n", path);
+                break;
+            }
             open_editor(path);
             break;
         }
