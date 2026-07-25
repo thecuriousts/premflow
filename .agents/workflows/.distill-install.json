@@ -1,0 +1,21 @@
+{
+  "profile": "premflow",
+  "source_drafts": "/home/sustainableabundance/Work/personal/agent-prompt-tuning-lab/data/distill/20260725-153622/drafts",
+  "installed_at": "2026-07-25T16:36:10.802Z",
+  "workflows": [
+    "premflow-interactive-plugin-build",
+    "issue-to-preventive-skill"
+  ],
+  "skills": [
+    "cli-plan-context-split",
+    "external-tty-launch",
+    "agent-skill-then-plugin",
+    "roadmap-write-and-link",
+    "premflow-skill-pack",
+    "session-unit-order",
+    "dual-copy-skill-publish"
+  ],
+  "rules": [
+    "journal-ensure-nonblocking.mdc"
+  ]
+}

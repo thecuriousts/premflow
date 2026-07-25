@@ -31,10 +31,17 @@
 !.cursor/skills/
 !.cursor/skills/**
 
-# .agents/ entry points (symlinks to .cursor/)
+# .agents/ entry points (symlinks to .cursor/) + portable workflow plans
 !.agents/
 !.agents/rules
 !.agents/skills
+!.agents/workflows/
+!.agents/workflows/**
+
+# Grok Build workflow templates
+!.grok/
+!.grok/workflows/
+!.grok/workflows/**
 
 # GitHub Actions (must un-ignore parent dirs for git to descend)
 !.github/
