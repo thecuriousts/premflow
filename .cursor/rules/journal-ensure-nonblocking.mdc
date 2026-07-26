@@ -1,0 +1,16 @@
+---
+description: Always run journal --ensure before writing reflections so editor never blocks agent flow
+alwaysApply: false
+---
+
+# journal-ensure-nonblocking
+
+Always run journal --ensure before writing reflections so editor never blocks agent flow
+
+## Constraints
+
+- call journal --ensure
+- append [WIN]/[NOTE] to log.txt
+- open editor only for user
+
+Evidence: turn 18 and turn 13 narrative on journal ensure in C
