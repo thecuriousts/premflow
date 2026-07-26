@@ -15,6 +15,7 @@
     "premflow-skill-pack"
   ],
   "rules": [
-    "journal-ensure-nonblocking.mdc"
+    "journal-ensure-nonblocking.mdc",
+    "no-magic-numbers-in-c.mdc"
   ]
 }

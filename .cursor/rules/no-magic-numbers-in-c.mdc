@@ -1,0 +1,16 @@
+---
+description: Replace all literal numbers passed to functions with named constants or scoped locals matching parameter semantics
+alwaysApply: false
+---
+
+# no-magic-numbers-in-c
+
+Replace all literal numbers passed to functions with named constants or scoped locals matching parameter semantics
+
+## Constraints
+
+- Identify literals in calls
+- Define descriptive constants in header
+- Update call sites with locals
+
+Evidence: turns 1-2: TASK_LIST_SHOW_ALL renamed to DEFAULT_TASK_LIST_SHOW_ALL and MAX_TASKS_TO_SHOW
