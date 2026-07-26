@@ -1,6 +1,7 @@
 {
   "profile": "premflow",
-  "source_drafts": "~/Work/personal/agent-prompt-tuning-lab/data/distill/20260725-153622/drafts",
+  "distill_run": "20260725-153622",
+  "source_drafts": "data/distill/20260725-153622/drafts",
   "installed_at": "2026-07-25T16:36:10.802Z",
   "trim_note": "2026-07-25: dropped issue-to-preventive-skill and dual-copy/session-unit-order (personal-skills); kept interactive plugin build and premflow CLI skills.",
   "workflows": [
