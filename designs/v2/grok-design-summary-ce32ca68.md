@@ -16,7 +16,7 @@
 - **PR Plan**: 6 ordered small slices (1: polish review/todos/dedup/dates; 2: pure stats/search/C-full; 3: journal+heuristics+ai-config; 4: stub+parse+graceful+docs; 5: helper contract+prefer+contrib ex; 6: semantic+sidecar+coach+v2). Each testable, cites design.
 
 ## Concrete Exploration Used
-- list_dir (root, src, docs, /home/sustainableabundance + dot via terminal ls/find).
+- list_dir (root, src, docs, `$HOME` + dot via terminal ls/find).
 - read_file: all src/*.c/h (full or chunks: main:39 batch, app parse 327-391 + update 190 + view, effects, core paths 48/182/280/315/370, ui show_review 64-185 + stats 34 + search 187), premflow.h/app.h, README, docs/architecture.md, .stellarfusion/state.json (phase1_complete, fused concepts, debts), ~/.premflow/{log.txt (87 lines), todo.txt (13), config, journal/*}, cliconsolehelp.txt, CMakeLists, tests/test.c, elomaxz.h snippet.
 - run_terminal: ls -a dots, cat data, ./build/premflow review (smart output: pending 7+...5more, wins 4, notes 5, dones dups, 40 pomos), stats (ugly), --help, binary size 36K, ollama version/list/ps (qwen2.5:7b 4.7GB, nomic), time ollama run (~4.3s), grep for llm (none in src), find no AGENTS.md root.
 - web: ollama API /generate (curl json, stream:false, response), llama.cpp embed sizes/tradeoffs, CLI AI patterns (sidecar/helper common).

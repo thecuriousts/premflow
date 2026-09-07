@@ -445,7 +445,7 @@ Each PR: small diff (<300 LOC), reviewable, cites this design, updates changelog
 ## References
 
 - Source: src/main.c:39 (elomaxz_run_batch), src/app.c:327 (parse_argv), src/app.c:190 (REVIEW), src/app.c:208 (pf_view), src/ui.c:64 (show_review), src/ui.c:34 (stats), src/ui.c:187 (search), src/core.c:48 (data_path), src/core.c:182 (append_entry), src/core.c:280 (list_active_tasks), src/core.c:315 (complete_task:370 cleaning), src/effects.c:8 (pf_handle_cmd), src/premflow.h, src/app.h.
-- Data: /home/sustainableabundance/.premflow/log.txt (87 lines, many dups), todo.txt (13 pending), journal/.
+- Data: `$HOME/.premflow/log.txt` (87 lines, many dups), todo.txt (13 pending), journal/.
 - State: .stellarfusion/state.json (fused: MVU, log+todo, phase1 review, static hazard; debt: review medium, display, parsing).
 - Docs: docs/architecture.md (full runner rationale, mermaids), README.md (philosophy, usage, 36KB implied).
 - elomaxz: build/_deps/elomaxz-src/include/elomaxz.h (CMD_CUSTOM, run_batch).

@@ -77,7 +77,7 @@ flowchart TB
 | Search | C | Shell `grep` via `system()` | `src/ui.c` (`show_search`) |
 | Pure unit tests | B+ | Core paths + pomo engine; no LLM | `tests/test.c`, `CMakeLists.txt` (`test_runner`) |
 | Local-LLM-in-product path | C | v2 draft; **deprioritized** vs Grok bridge | `designs/v2/premflow_v2.0.md`, §8 |
-| Grok → premflow bridge | A | Full plugin: `~/Work/personal/plugins/premflow` (commands + pf-focus + journal --ensure) | plugin README, `commands/*`, `bin/pf-*` |
+| Grok → premflow bridge | A | Full plugin: [p10ns11y/plugins/premflow](https://github.com/p10ns11y/plugins/tree/main/premflow) under `$PLUGINS_ROOT` (commands + pf-focus + journal --ensure) | plugin README, `commands/*`, `bin/pf-*` |
 | Agent steerability | B | Project skills + this roadmap | `.agents/skills/*`, this file |
 | data_path hazard | B | Documented; callers must copy | `src/core.c` (`data_path`), `.stellarfusion/state.json` |
 
@@ -401,7 +401,7 @@ sequenceDiagram
 
 | File | Work |
 |------|------|
-| `~/Work/personal/skills/premflow/` (or plugin dir) | SKILL.md: when to run which CLI; never invent log lines |
+| `$PLUGINS_ROOT/premflow/skills/premflow` (from [p10ns11y/plugins](https://github.com/p10ns11y/plugins)) | SKILL.md: when to run which CLI; never invent log lines |
 | optional `commands/` | `/premflow-review`, `/premflow-focus`, `/premflow-capture` |
 | optional hooks | none required; SessionStart can print `premflow review` tip |
 | `designs/coming-next.md` §8 / §15 | contract for tool use |
@@ -577,7 +577,7 @@ You are coaching a day. Use premflow as the system of record.
 | Install a plugin | `grok plugin install <path|url> --trust` or Marketplace `i` |
 | Enable/disable | Plugins tab `Space`; `grok plugin list` |
 | Reload | Plugins tab `r` or restart session |
-| Project skills today | `.agents/skills/*` (coding); daily capture = `~/Work/personal/skills/premflow` |
+| Project skills today | `.agents/skills/*` (coding); daily capture = `$PLUGINS_ROOT/premflow/skills/premflow` or `grok plugin install` |
 
 ### Coding skills already in this repo
 
