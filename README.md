@@ -85,9 +85,11 @@ Deep overhaul roadmap (UX flow, pure-C polish, **Grok Build using premflow as to
 **Grok plugin (full):** [p10ns11y/plugins](https://github.com/p10ns11y/plugins) → `premflow/` — slash commands `/note` `/win` `/task` `/review` `/coach` `/focus` `/journal` + skill. Interactive **pomo** opens an external terminal (`bin/pf-focus`); **journal --ensure** prints today’s path without blocking on `$EDITOR`.
 
 ```bash
-git clone git@github.com:p10ns11y/plugins.git ~/Work/personal/plugins   # or pull if already cloned
-ln -sfn ~/Work/personal/plugins/premflow ~/.grok/plugins/premflow
-ln -sfn ~/Work/personal/plugins/premflow/skills/premflow ~/.grok/skills/premflow
+# Operator-local: clone the plugin repo anywhere you keep personal tooling
+export PLUGINS_ROOT="${PLUGINS_ROOT:-$HOME/plugins}"
+git clone https://github.com/p10ns11y/plugins.git "$PLUGINS_ROOT"   # or pull if already cloned
+ln -sfn "$PLUGINS_ROOT/premflow" "$HOME/.grok/plugins/premflow"
+ln -sfn "$PLUGINS_ROOT/premflow/skills/premflow" "$HOME/.grok/skills/premflow"
 make install   # so PATH premflow has journal --ensure
 ```
 
@@ -177,18 +179,20 @@ Empty value = disable that sound.
 
 premflow is the **micro-capture CLI**. Notes/tasks/journal/pomo live in **`~/.premflow/`** (byte SoT). Other tools **view the same tree** — they do not own a second todo list.
 
+Set **`$LIFEOS`** to your life-os vault root. Plugin and ensembly paths are **operator-local** — use `$PLUGINS_ROOT` / `$ENSEMBLY_ROOT` (see install snippets above) or any clone location you prefer.
+
 | Peer | Path / link | Role |
 |------|-------------|------|
 | **Data (SoT)** | `~/.premflow/` | `todo.txt`, `log.txt`, `journal/`, `config.txt` — local only; may hold finance/PII |
-| **life-os portfolio card** | `~/life-os/Projects/premflow/README.md` | Product card (status, energy, sessions) — not a parallel inbox |
-| **life-os vault view** | `~/life-os/Projects/premflow/capture` → `~/.premflow` | Symlink (gitignored); same files in Obsidian |
-| **ensembly integration law** | `~/Work/personal/ensembly/docs/PREMFLOW-FIT.md` | One filesystem SoT, wrapper, privacy (redacted insights for share) |
+| **life-os portfolio card** | `$LIFEOS/Projects/premflow/README.md` | Product card (status, energy, sessions) — not a parallel inbox |
+| **life-os vault view** | `$LIFEOS/Projects/premflow/capture` → `$HOME/.premflow` | Symlink (gitignored); same files in Obsidian |
+| **ensembly integration law** | `$ENSEMBLY_ROOT/docs/PREMFLOW-FIT.md` (operator-local clone) | One filesystem SoT, wrapper, privacy (redacted insights for share) |
 | **ensembly CLI wrapper** | `node bin/swarm.js flow …` (repo: ensembly) | Invent/list/review via this binary + same `HOME/.premflow` |
 | **Day next-act / HITL** | ensembly `turn` / claim / approve | **Not** premflow — do not dump gates into `todo.txt` |
 
 ```bash
-# From ensembly: ensure vault capture link + call premflow
-cd ~/Work/personal/ensembly
+# From your ensembly clone: ensure vault capture link + call premflow
+cd "${ENSEMBLY_ROOT:-$HOME/ensembly}"
 npm run flow:link
 node bin/swarm.js flow task list   # == premflow task list (same files)
 ```
